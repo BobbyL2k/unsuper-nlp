@@ -64,13 +64,6 @@ const state_action = {
         } else {
             console.log('error addTab: tab with tabId', tabId, 'already exist');
         }
-    },
-    setInjectionToTab: function (tabId, code) {
-        if (global.tabs[tabId] !== undefined) {
-            global.tabs[tabId].code = code;
-        } else {
-            console.log('error setInjectionToTab: tab with tabId', tabId, 'not found');
-        }
     }
 }
 
@@ -114,30 +107,8 @@ const extension_action = {
         }
         if (state_info.getTabCount() > 0)
             setTimeout(extension_action.cleanDeadTabs, 5000);
-    },
-    injectCodeToTab: function (tabId) {
-        if (global.tabs[tabId] !== undefined) {
-            if (global.tabs[tabId].code !== undefined) {
-                console.log('injecting code to tab', tabId);
-                chrome.tabs.executeScript(tabId, {
-                    code: global.tabs[tabId].code
-                });
-            }else{
-                console.log('warning injectCodeToTab: no code to inject to tab', tabId)
-            }
-        } else {
-            console.log('error injectCodeToTab: tab with tabId', tabId, 'not found');
-        }
     }
 }
-
-// function tabsDo(func, callback) {
-//     global.tabs.forEach((tab) => {
-//         chrome.tabs.executeScript(tab.id, {
-//             code: func
-//         }, callback);
-//     });
-// }
 
 // Start Extension
 extension_action.startUp();
@@ -152,10 +123,10 @@ chrome.browserAction.onClicked.addListener(function (/*tab*/) {
         var tabObject = {
             id: tab.id,
             status: enm.status.LOADING,
-            storage: { test: 2 },
+            storage: { pageName: pageList[pageIndex] },
             code: undefined
         };
-
+        pageIndex++;
         state_action.addTab(tabObject);
 
     });
@@ -182,40 +153,70 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
                 chrome.tabs.sendMessage(tabId, {
                     type: 'storage',
                     storage: global.tabs[tabId].storage
-                }, {}, (newStorage) => {
-                    console.log('recived new storage', newStorage, 'from tab', tabId);
-                    if(newStorage === undefined){
-                        console.log('chrome.runtime.lastError', chrome.runtime.lastError);
-                    }else{
-                        global.tabs[tabId].storage = newStorage;
-                    }
-                    // global.tabs[tabId].status = enm.status.DEAD;
-                });
+                }, {}, createResponseHandler(tabId));
 
-                state_action.setInjectionToTab(tabId,
-                    `
-                    console.log('eiei');
-                    const func = ${pageInject.toString()};
-                    set_func(func);
-                    `
-                )
-                extension_action.injectCodeToTab(tabId);
+                chrome.tabs.executeScript(tabId, {
+                    code: `set_func(${pageInject.toString()});`
+                });
             });
         }
     }
 });
 
+function createResponseHandler(tabId) {
+    return function responseHandler(response) {
+        if (response === undefined) {
+            console.log('chrome.runtime.lastError', chrome.runtime.lastError);
+        }
+        if (response.type == 'update') {
+            console.log('recived new storage', response.storage, 'from tab', tabId);
+            global.tabs[tabId].storage = response.storage;
+            chrome.tabs.sendMessage(tabId, {
+                type: 'updated',
+                storage: global.tabs[tabId].storage
+            }, {}, responseHandler);
+        }
+        if (response.type == 'close') {
+            chrome.tabs.remove(tabId);
+        }
+    }
+}
+
 function pageInject(storage, callback) {
     console.log('storage', storage);
-    const urlRegex = /https\:\/\/pantip.com/g;
-    if (urlRegex.test(document.location) == false) {
-        setTimeout(() => {
-            console.log('redirecting');
-            document.location = 'https://pantip.com/';
-        }, 1000);
+    var target = `https://www.w3schools.com/${storage.pageName}/default.asp`;
+    if (document.location != target) {
+        document.location = target;
     }
     else {
-        storage.test++;
-        callback(null, storage);
+        // var dom_list = document.querySelectorAll('.entry-content');
+        // var text_list = [];
+        // for (var c = 0; c < dom_list.length; c++) {
+        //     text_list.push(dom_list[c].innerText);
+        // }
+        // callback.update_storage(document.body.innerHTML, (storage, callback) => {
+        //     // callback.close();
+        // });
     }
+}
+
+var pageList = ['html', 'css', 'js'];
+
+for (var pageIndex = 0; pageIndex < pageList.length; pageIndex++) {
+    function create_callback(local_pageIndex) {
+        return function callback(tab) {
+            console.log('tab', tab.id, 'created');
+            console.log('pageList', pageList, pageList[local_pageIndex], local_pageIndex)
+            var tabObject = {
+                id: tab.id,
+                status: enm.status.LOADING,
+                storage: {
+                    pageName: pageList[local_pageIndex]
+                }
+            };
+            console.log('tabObject', JSON.stringify(tabObject));
+            state_action.addTab(tabObject);
+        }
+    }
+    chrome.tabs.create({}, create_callback(pageIndex));
 }

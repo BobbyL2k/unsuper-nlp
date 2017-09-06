@@ -1,42 +1,81 @@
 console.log('hello from page');
 
-var tabStorage = undefined;
-var tabFunc = undefined;
-var tabSendResponse = undefined;
+var g = {
+    updatedStorageCallback: undefined,
+    injectedFunction: undefined,
+    localStorage: undefined,
+    backgroundPageResponse: undefined
+};
 
-chrome.runtime.onMessage.addListener(function (message, sender, sendResponse){
-    console.log('message recevied', message);
-    if(message.type == 'ok'){
-        sendResponse({
-            value:'ok'
+const callback_handler = {
+    update_storage: (newStorage, callback) => {
+        console.log('sending new storage', newStorage);
+        g.updatedStorageCallback = callback;
+        g.backgroundPageResponse({
+            type: 'update',
+            storage: newStorage
+        });
+    },
+    close: () => {
+        g.backgroundPageResponse({
+            type: 'close'
         });
     }
-    if(message.type == 'storage'){
+}
+
+chrome.runtime.onMessage.addListener(function (message, _sender, sendResponse) {
+    console.log('message recevied', message);
+
+    // handle readiness handshake
+    if (message.type == 'ok') {
+        sendResponse({ value: 'ok' });
+        return;
+    }
+
+    // handle storage
+    if (message.type == 'storage') {
         console.log('recived tab storage');
-        tabStorage = message.storage;
-        tabSendResponse = sendResponse;
-        if(run_func() == false){
+        g.localStorage = message.storage;
+        g.backgroundPageResponse = sendResponse;
+        if (executeInjectedFunction() == false) {
+            // failed to run the injected script
+            // requesting async call
+            return true;
+        }
+    }
+
+    if (message.type == 'updated') {
+        console.log('storage have been updated');
+        g.localStorage = message.storage;
+        g.backgroundPageResponse = sendResponse;
+        if (g.updatedStorageCallback !== undefined) {
+            g.updatedStorageCallback(g.localStorage, callback_handler);
             return true;
         }
     }
 });
 
-function set_func(func){
-    tabFunc = func;
-    run_func();
-}
-
-function run_func(sendResponse){
-    console.log('run_func: tabFunc && tabStorage && tabSendResponse', tabFunc !== undefined, tabStorage !== undefined, tabSendResponse !== undefined);
-    if(tabFunc && tabStorage && tabSendResponse){
+function executeInjectedFunction() {
+    if (
+        g.injectedFunction &&
+        g.localStorage &&
+        g.backgroundPageResponse
+    ) {
         console.log('executing injection');
-        tabFunc(tabStorage, (err, newStorage)=>{
-            if(err) return console.log(err);
-            console.log('sending new storage', newStorage);
-            tabSendResponse(newStorage)
-        });
+        g.injectedFunction(g.localStorage, callback_handler);
         return true;
-    }else{
+    } else {
+        console.log(
+            'executeInjectedFunction: incomplete : injectedFunction, localStorage, backgroundPageResponse',
+            g.injectedFunction !== undefined,
+            g.localStorage !== undefined,
+            g.backgroundPageResponse !== undefined
+        );
         return false;
     }
+}
+
+function set_func(func) {
+    g.injectedFunction = func;
+    executeInjectedFunction();
 }
