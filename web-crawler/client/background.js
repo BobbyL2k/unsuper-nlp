@@ -116,20 +116,42 @@ extension_action.startUp();
 // Setup Events Handling
 chrome.browserAction.onClicked.addListener(function (/*tab*/) {
     console.log('Icon clicked');
+
+    var pageList = ['html', 'css', 'js'];
+
+    for (var pageIndex = 0; pageIndex < pageList.length; pageIndex++) {
+        function create_callback(local_pageIndex) {
+            return function callback(tab) {
+                console.log('tab', tab.id, 'created');
+                console.log('pageList', pageList, pageList[local_pageIndex], local_pageIndex)
+                var tabObject = {
+                    id: tab.id,
+                    status: enm.status.LOADING,
+                    storage: {
+                        pageName: pageList[local_pageIndex]
+                    }
+                };
+                console.log('tabObject', JSON.stringify(tabObject));
+                state_action.addTab(tabObject);
+            }
+        }
+        chrome.tabs.create({}, create_callback(pageIndex));
+    }
+
     // create tab
-    chrome.tabs.create({}, function (tab) {
-        console.log('tab', tab.id, 'created');
+    // chrome.tabs.create({}, function (tab) {
+    //     console.log('tab', tab.id, 'created');
 
-        var tabObject = {
-            id: tab.id,
-            status: enm.status.LOADING,
-            storage: { pageName: pageList[pageIndex] },
-            code: undefined
-        };
-        pageIndex++;
-        state_action.addTab(tabObject);
+    //     var tabObject = {
+    //         id: tab.id,
+    //         status: enm.status.LOADING,
+    //         storage: { pageName: pageList[pageIndex] },
+    //         code: undefined
+    //     };
+    //     pageIndex++;
+    //     state_action.addTab(tabObject);
 
-    });
+    // });
 });
 
 chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
@@ -167,6 +189,7 @@ function createResponseHandler(tabId) {
     return function responseHandler(response) {
         if (response === undefined) {
             console.log('chrome.runtime.lastError', chrome.runtime.lastError);
+            return;
         }
         if (response.type == 'update') {
             console.log('recived new storage', response.storage, 'from tab', tabId);
@@ -179,6 +202,27 @@ function createResponseHandler(tabId) {
         if (response.type == 'close') {
             chrome.tabs.remove(tabId);
         }
+        if (response.type == 'save') {
+            var request = new XMLHttpRequest();
+            request.open('POST', 'http://128.199.232.162', true);
+
+            request.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+            request.onload = ()=>{
+                send_saved_message(request.response == 'inserted ok 1')
+            };
+            request.onerror = ()=>{
+                send_saved_message(false)
+            };
+            console.log(JSON.stringify(response.data))
+            request.send(JSON.stringify(response.data));
+
+            function send_saved_message(success){
+                chrome.tabs.sendMessage(tabId, {
+                    type: 'saved',
+                    success: false
+                }, {}, responseHandler);
+            }
+        }
     }
 }
 
@@ -189,6 +233,10 @@ function pageInject(storage, callback) {
         document.location = target;
     }
     else {
+        var save_obj = {target:target};
+        callback.save(save_obj, (response, callback)=>{
+            console.log(response);
+        })
         // var dom_list = document.querySelectorAll('.entry-content');
         // var text_list = [];
         // for (var c = 0; c < dom_list.length; c++) {
@@ -198,25 +246,4 @@ function pageInject(storage, callback) {
         //     // callback.close();
         // });
     }
-}
-
-var pageList = ['html', 'css', 'js'];
-
-for (var pageIndex = 0; pageIndex < pageList.length; pageIndex++) {
-    function create_callback(local_pageIndex) {
-        return function callback(tab) {
-            console.log('tab', tab.id, 'created');
-            console.log('pageList', pageList, pageList[local_pageIndex], local_pageIndex)
-            var tabObject = {
-                id: tab.id,
-                status: enm.status.LOADING,
-                storage: {
-                    pageName: pageList[local_pageIndex]
-                }
-            };
-            console.log('tabObject', JSON.stringify(tabObject));
-            state_action.addTab(tabObject);
-        }
-    }
-    chrome.tabs.create({}, create_callback(pageIndex));
 }

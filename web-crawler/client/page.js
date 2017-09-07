@@ -1,7 +1,7 @@
 console.log('hello from page');
 
 var g = {
-    updatedStorageCallback: undefined,
+    operationCompleteCallback: undefined,
     injectedFunction: undefined,
     localStorage: undefined,
     backgroundPageResponse: undefined
@@ -10,16 +10,26 @@ var g = {
 const callback_handler = {
     update_storage: (newStorage, callback) => {
         console.log('sending new storage', newStorage);
-        g.updatedStorageCallback = callback;
+        g.operationCompleteCallback = callback;
         g.backgroundPageResponse({
             type: 'update',
             storage: newStorage
         });
+        g.backgroundPageResponse = undefined;
     },
     close: () => {
         g.backgroundPageResponse({
             type: 'close'
         });
+        g.backgroundPageResponse = undefined;
+    },
+    save: (data, callback) => {
+        g.operationCompleteCallback = callback;
+        g.backgroundPageResponse({
+            type: 'save',
+            data: data
+        });
+        g.backgroundPageResponse = undefined;
     }
 }
 
@@ -48,14 +58,28 @@ chrome.runtime.onMessage.addListener(function (message, _sender, sendResponse) {
         console.log('storage have been updated');
         g.localStorage = message.storage;
         g.backgroundPageResponse = sendResponse;
-        if (g.updatedStorageCallback !== undefined) {
-            g.updatedStorageCallback(g.localStorage, callback_handler);
+        if (g.operationCompleteCallback !== undefined) {
+            g.operationCompleteCallback(g.localStorage, callback_handler);
+            g.operationCompleteCallback = undefined;
             return true;
         }
     }
+
+        if (message.type == 'saved') {
+            console.log('storage have been saved to database');
+            var response = { success: message.success };
+            g.backgroundPageResponse = sendResponse;
+            if (g.operationCompleteCallback !== undefined) {
+                g.operationCompleteCallback(response, callback_handler);
+                g.operationCompleteCallback = undefined;
+                return true;
+            }
+        }
 });
 
 function executeInjectedFunction() {
+    // returns true if g.injectedFunction is executed
+    // returns false if g.injectedFunction is NOT executed
     if (
         g.injectedFunction &&
         g.localStorage &&
