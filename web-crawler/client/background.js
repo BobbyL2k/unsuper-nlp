@@ -204,7 +204,7 @@ function createResponseHandler(tabId) {
         }
         if (response.type == 'save') {
             var request = new XMLHttpRequest();
-            request.open('POST', 'http://128.199.232.162', true);
+            request.open('POST', 'http://128.199.232.162/save/data', true);
 
             request.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
             request.onload = ()=>{
