@@ -119,8 +119,8 @@ function pageInject(storage, callback) {
                 }, pageInject);
             });
         }else if(storage.type == 'GET_POST'){
-            var dom_comments = document.querySelectorAll('#comments-jsrender > div:not(.remove-comment) .display-post-story:not(.main-comment)');
-            var dom_c_timestamp = document.querySelectorAll('#comments-jsrender > div:not(.remove-comment) .display-post-timestamp abbr');
+            var dom_comments = document.querySelectorAll('#comments-jsrender div:not(.remove-comment) > div > div > div > .display-post-story:not(.main-comment)');
+            var dom_c_timestamp = document.querySelectorAll('#comments-jsrender div:not(.remove-comment) > div > div > div > div > div > div > span.display-post-timestamp abbr');
             console.assert(dom_c_timestamp.length == dom_comments.length);
             var comments = [];
             for(var c=0; c<dom_comments.length; c++){

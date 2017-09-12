@@ -134,12 +134,12 @@ chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
 
 chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
     if (global.tabs[tabId] !== undefined) {
-        console.log('chrome.tabs.onUpdated on managed tab', tabId, changeInfo, tab);
         if (changeInfo.status == 'complete') {
+            console.log('chrome.tabs.onUpdated complete on managed tab', tabId, changeInfo, tab);
             chrome.tabs.executeScript(tabId, {
                 file: 'page.js'
             }, function () {
-                console.log('injected extension page script into tab', tabId);
+                // console.log('injected extension page script into tab', tabId);
                 global.tabs[tabId].status = enm.status.ALIVE;
 
                 console.log('sending tab storage', global.tabs[tabId].storage, global.tabs[tabId], 'into tab', tabId); /// TO REMOVE
