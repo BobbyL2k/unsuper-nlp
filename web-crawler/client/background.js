@@ -1,3 +1,7 @@
+console.assert(onExtensionFirstClicked !== undefined, 'onExtensionFirstClicked function is not defined');
+console.assert(pageInject !== undefined, 'pageInject function is not defined');
+console.assert(onPageMessage !== undefined, 'onPageMessage function is not defined');
+
 // Declare "global" variable
 var global = {
     tabs: {}
@@ -50,24 +54,22 @@ const state_action = {
             delete global.tabs[tabId];
             extension_action.updateTabsCount();
         } else {
-            console.log('error removeTab: tab with tabId', tabId, 'not found');
+            console.warn('warn removeTab: tab with tabId', tabId, 'not found');
         }
     },
     addTab: function (tabObject) {
         if (global.tabs[tabObject.id] === undefined) {
+            tabObject.status = enm.status.LOADING;
             global.tabs[tabObject.id] = tabObject;
             extension_action.updateTabsCount();
 
-            if (state_info.getTabCount() == 1) {
+            if (state_action.getTabCount() == 1) {
                 extension_action.cleanDeadTabs();
             }
         } else {
-            console.log('error addTab: tab with tabId', tabId, 'already exist');
+            console.warn('warn addTab: tab with tabId', tabId, 'already exist');
         }
-    }
-}
-
-const state_info = {
+    },
     getTabCount: function () {
         return Object.keys(global.tabs).length;
     }
@@ -75,83 +77,52 @@ const state_info = {
 
 const extension_action = {
     updateTabsCount: function () {
-        chrome.browserAction.setBadgeText({ text: state_info.getTabCount().toString() });
+        chrome.browserAction.setBadgeText({ text: state_action.getTabCount().toString() });
     },
     startUp: function () {
-        console.log("bg page started");
         extension_action.updateTabsCount();
     },
     cleanDeadTabs: function () {
-        console.log('checking dead', global.tabs);
-        for (var tabId in global.tabs) {
-            tab = global.tabs[tabId];
-            if (tab.status === enm.status.ALIVE) {
-                tab_action.checkOk(tab.id, (ok) => {
-                    if (!ok) {
-                        console.log('tab', tab.id, 'is DEAD, killing tab.');
-                        tab.status = enm.status.DEAD;
-                    } else {
-                        console.log('tab', tab.id, 'is ok.');
-                    }
-                });
-            }
-            // Note: can NOT use else if due to the ALIVE condition marking the tab as DEAD
-            if (tab.status === enm.status.DEAD) {
-                // Note: chrome.tabs.remove requires int as tab's ID
-                chrome.tabs.remove(tab.id);
-                state_action.removeTab(tabId);
-            }
-            if (tab.status === enm.status.LOADING) {
-                console.log('skipping check tab', tabId, 'with status', tab.status);
-            }
-        }
-        if (state_info.getTabCount() > 0)
-            setTimeout(extension_action.cleanDeadTabs, 5000);
+        // console.log('checking dead', global.tabs);
+        // for (var tabId in global.tabs) {
+        //     tab = global.tabs[tabId];
+        //     if (tab.status === enm.status.ALIVE) {
+        //         tab_action.checkOk(tab.id, (ok) => {
+        //             if (!ok) {
+        //                 console.log('tab', tab.id, 'is DEAD, killing tab.');
+        //                 tab.status = enm.status.DEAD;
+        //             } else {
+        //                 console.log('tab', tab.id, 'is ok.');
+        //             }
+        //         });
+        //     }
+        //     // Note: can NOT use else if due to the ALIVE condition marking the tab as DEAD
+        //     if (tab.status === enm.status.DEAD) {
+        //         // Note: chrome.tabs.remove requires int as tab's ID
+        //         chrome.tabs.remove(tab.id);
+        //         state_action.removeTab(tabId);
+        //     }
+        //     if (tab.status === enm.status.LOADING) {
+        //         console.log('skipping check tab', tabId, 'with status', tab.status);
+        //     }
+        // }
+        // if (state_action.getTabCount() > 0)
+        //     setTimeout(extension_action.cleanDeadTabs, 5000);
     }
 }
 
 // Start Extension
 extension_action.startUp();
 
+var firstClicked = true;
 // Setup Events Handling
-chrome.browserAction.onClicked.addListener(function (/*tab*/) {
+chrome.browserAction.onClicked.addListener(()=>{
     console.log('Icon clicked');
-
-    var pageList = ['html', 'css', 'js'];
-
-    for (var pageIndex = 0; pageIndex < pageList.length; pageIndex++) {
-        function create_callback(local_pageIndex) {
-            return function callback(tab) {
-                console.log('tab', tab.id, 'created');
-                console.log('pageList', pageList, pageList[local_pageIndex], local_pageIndex)
-                var tabObject = {
-                    id: tab.id,
-                    status: enm.status.LOADING,
-                    storage: {
-                        pageName: pageList[local_pageIndex]
-                    }
-                };
-                console.log('tabObject', JSON.stringify(tabObject));
-                state_action.addTab(tabObject);
-            }
-        }
-        chrome.tabs.create({}, create_callback(pageIndex));
+    if(firstClicked){
+        firstClicked = false;
+        onExtensionFirstClicked(state_action);
     }
-
-    // create tab
-    // chrome.tabs.create({}, function (tab) {
-    //     console.log('tab', tab.id, 'created');
-
-    //     var tabObject = {
-    //         id: tab.id,
-    //         status: enm.status.LOADING,
-    //         storage: { pageName: pageList[pageIndex] },
-    //         code: undefined
-    //     };
-    //     pageIndex++;
-    //     state_action.addTab(tabObject);
-
-    // });
+    onExtensionClicked(state_action);
 });
 
 chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
@@ -188,10 +159,10 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
 function createResponseHandler(tabId) {
     return function responseHandler(response) {
         if (response === undefined) {
-            console.log('chrome.runtime.lastError', chrome.runtime.lastError);
-            return;
+            console.trace();
+            console.error('chrome.runtime.lastError', chrome.runtime.lastError);
         }
-        if (response.type == 'update') {
+        else if (response.type == 'update') {
             console.log('recived new storage', response.storage, 'from tab', tabId);
             global.tabs[tabId].storage = response.storage;
             chrome.tabs.sendMessage(tabId, {
@@ -199,10 +170,10 @@ function createResponseHandler(tabId) {
                 storage: global.tabs[tabId].storage
             }, {}, responseHandler);
         }
-        if (response.type == 'close') {
+        else if (response.type == 'close') {
             chrome.tabs.remove(tabId);
         }
-        if (response.type == 'save') {
+        else if (response.type == 'save') {
             var request = new XMLHttpRequest();
             request.open('POST', 'http://128.199.232.162/save/data', true);
 
@@ -213,37 +184,29 @@ function createResponseHandler(tabId) {
             request.onerror = ()=>{
                 send_saved_message(false)
             };
-            console.log(JSON.stringify(response.data))
             request.send(JSON.stringify(response.data));
 
             function send_saved_message(success){
                 chrome.tabs.sendMessage(tabId, {
                     type: 'saved',
-                    success: false
+                    success: success
                 }, {}, responseHandler);
             }
+        }
+        else if (response.type == 'message'){
+            console.log('recived message from tab', tabId, response);
+            onPageMessage(tabId, response.data, (newStorage)=>{
+                global.tabs[tabId].storage = newStorage;
+                chrome.tabs.sendMessage(tabId, {
+                    type: 'response',
+                    storage: global.tabs[tabId].storage
+                }, {}, responseHandler);
+            });
+        }
+        else{
+            console.log('unknown response recived', response);
         }
     }
 }
 
-function pageInject(storage, callback) {
-    console.log('storage', storage);
-    var target = `https://www.w3schools.com/${storage.pageName}/default.asp`;
-    if (document.location != target) {
-        document.location = target;
-    }
-    else {
-        var save_obj = {target:target};
-        callback.save(save_obj, (response, callback)=>{
-            console.log(response);
-        })
-        // var dom_list = document.querySelectorAll('.entry-content');
-        // var text_list = [];
-        // for (var c = 0; c < dom_list.length; c++) {
-        //     text_list.push(dom_list[c].innerText);
-        // }
-        // callback.update_storage(document.body.innerHTML, (storage, callback) => {
-        //     // callback.close();
-        // });
-    }
-}
+console.log('background.js loaded');
