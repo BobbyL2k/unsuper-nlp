@@ -28,6 +28,19 @@ app.all('/', function (req, res) {
     });
 });
 
+app.all('/save/data', function (req, res) {
+    // Use connect method to connect to the Server
+    MongoClient.connect(mongodb_url, (err, db) => {
+        assert.equal(null, err);
+        var collection = db.collection("data");
+        collection.insertOne(req.body, {w:1}, function(err, result) {
+            console.log('/save/data inserted ok', result.result.ok, Date());
+            res.send(`inserted ok ${result.result.ok}`)
+            db.close();
+        });
+    });
+});
+
 app.listen(PORT_NUMBER, function () {
     console.log(`Example app listening on port ${PORT_NUMBER}!`);
 });
