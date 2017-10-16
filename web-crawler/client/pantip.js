@@ -2,27 +2,18 @@
 
 function onExtensionFirstClicked (state_action) {
 
-    var pageList = ['HTML'];
-    // var pageList = ['HTML', 'CSS', 'JS'];
-
-    for (var pageIndex = 0; pageIndex < pageList.length; pageIndex++) {
-        function create_callback(local_pageIndex) {
-            return function callback(tab) {
-                console.log('tab', tab.id, 'created');
-                console.log('pageList', pageList, pageList[local_pageIndex], local_pageIndex)
-                var tabObject = {
-                    id: tab.id,
-                    storage: {
-                        target: "https://pantip.com/tag/%E0%B8%84%E0%B8%AD%E0%B8%99%E0%B9%82%E0%B8%94%E0%B8%A1%E0%B8%B4%E0%B9%80%E0%B8%99%E0%B8%B5%E0%B8%A2%E0%B8%A1",
-                        type: "GET_TOPICS"
-                    }
-                };
-                console.log('tabObject', JSON.stringify(tabObject));
-                state_action.addTab(tabObject);
+    chrome.tabs.create({}, function callback(tab) {
+        console.log('tab', tab.id, 'created');
+        var tabObject = {
+            id: tab.id,
+            storage: {
+                target: "https://pantip.com/tag/%E0%B8%84%E0%B8%AD%E0%B8%99%E0%B9%82%E0%B8%94%E0%B8%A1%E0%B8%B4%E0%B9%80%E0%B8%99%E0%B8%B5%E0%B8%A2%E0%B8%A1",
+                type: "GET_TOPICS"
             }
-        }
-        chrome.tabs.create({}, create_callback(pageIndex));
-    }
+        };
+        console.log('tabObject', JSON.stringify(tabObject));
+        state_action.addTab(tabObject);
+    });
 
     // create tab
     // chrome.tabs.create({}, function (tab) {

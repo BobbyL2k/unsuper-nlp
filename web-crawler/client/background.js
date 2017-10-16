@@ -179,10 +179,10 @@ function createResponseHandler(tabId) {
 
             request.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
             request.onload = ()=>{
-                send_saved_message(request.response == 'inserted ok 1')
+                send_saved_message(request.response == 'inserted ok 1');
             };
             request.onerror = ()=>{
-                send_saved_message(false)
+                send_saved_message(false);
             };
             request.send(JSON.stringify(response.data));
 

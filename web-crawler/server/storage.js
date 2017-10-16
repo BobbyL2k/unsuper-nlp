@@ -13,7 +13,8 @@ const app = express()
 
 const PORT_NUMBER = 80;
 
-app.use(bodyParser.json());
+app.use(bodyParser.json({limit: '50mb'}));
+// app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 
 app.all('/', function (req, res) {
     // Use connect method to connect to the Server
