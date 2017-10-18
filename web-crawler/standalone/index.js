@@ -10,9 +10,9 @@ processIndex('/forum/home');
 function processIndex(indexRoute) {
     console.log('loading', indexRoute);
     request.get({
-        host: `https://pantip.com`,
+        baseUrl: `https://pantip.com`,
         headers: { 'user-agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36' },
-        path: indexRoute
+        uri: indexRoute
     })
         .pipe(concat(htmlBuffer => {
             let { nextIndex, topics } = processHtmlBuffer(htmlBuffer);
