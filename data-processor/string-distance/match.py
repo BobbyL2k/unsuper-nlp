@@ -73,7 +73,7 @@ def string_search(lg_npstr, sm_npstr, threshold=0.25, keep_best=True):
 
     distance = mem[:-2][pass_threshold]
 
-    if keep_best == False:
+    if not keep_best:
         return index_from, index_to, distance
 
     struct = list(zip(index_from, index_to, distance))
