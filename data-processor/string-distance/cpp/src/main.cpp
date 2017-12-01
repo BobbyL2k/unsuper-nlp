@@ -5,7 +5,7 @@
 #include "wide_string.hpp"
 
 using namespace std;
-using namespace nlohmann;
+using json = nlohmann::json;
 
 string slurp(ifstream &in) {
     stringstream sstr;
@@ -13,17 +13,45 @@ string slurp(ifstream &in) {
     return sstr.str();
 }
 
-int main(int argc, char *argv[]) {
-    // read a JSON file
-    std::ifstream i("./data-processor/string-distance/cpp/build/key.json");
-    json j;
-    // write prettified JSON to another file
-    std::ofstream o("./data-processor/string-distance/cpp/build/pretty.json");
+json process_argument(int argc, char *argv[]){
+    json result;
+    auto &flags = result["flags"] = json::object();
+    auto &values = result["values"] = json::array();
+    for(int c=1; c<argc; c++){
+        string arg_str(argv[c]);
+        if(c < argc-1 && arg_str.at(0) == '-'){
+            auto value = string(argv[c+1]);
+            cout << "tes " << arg_str.substr(1) << " " << value << endl;
+            flags[arg_str.substr(1)] = value;
+            c++;
+        }else{
+            values.push_back(arg_str);
+        }
+    }
+    for(auto flag : flags){
+        cout << flag << endl;
+    }
+    return result;
+}
 
-    i >> j;
-    o << j << std::endl;
-    i >> j;
-    o << j << std::endl;
+int main(int argc, char *argv[]) {
+    for(int c=0; c<argc; c++){
+        cout << c << " " << argv[c] << endl;
+    }
+
+    auto args = process_argument(argc, argv);
+    cout << args.dump(4) << endl;
+
+    // read a JSON file
+    // std::ifstream i("./data-processor/string-distance/cpp/build/key.json");
+    // json j;
+    // // write prettified JSON to another file
+    // std::ofstream o("./data-processor/string-distance/cpp/build/pretty.json");
+
+    // i >> j;
+    // o << j << std::endl;
+    // i >> j;
+    // o << j << std::endl;
 
     // setup_locale();
 

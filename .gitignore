@@ -3,3 +3,5 @@ data/
 __pycache__/
 .vscode
 *.ipynb
+data-processor/string-distance/cpp/build
+bin/
