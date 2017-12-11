@@ -1,3 +1,4 @@
+import * as bcrypt from 'bcrypt';
 import * as time from 'clean-time';
 import * as connectMongo from 'connect-mongo';
 import * as cookieParser from 'cookie-parser';
@@ -38,7 +39,7 @@ const auth = () => {
         } else {
             const user = new UsersModel({
                 id: req.body.lg_username,
-                password: req.body.lg_password,
+                password: await bcrypt.hash(req.body.lg_password, 13),
             });
             await user.save();
             res.redirect('/login');
@@ -49,7 +50,7 @@ const auth = () => {
         const user = await UsersModel.findOne({ id: username });
         if (user === null) {
             return undefined;
-        } else if (user.get('password') !== password) {
+        } else if (await bcrypt.compare(password, user.get('password')) === false) {
             return undefined;
         } else {
             return user.get('id');
