@@ -1,43 +1,47 @@
 // Mongo
 
-import * as bcrypt from "bcrypt";
-import { MongoClient } from "mongodb";
+import * as bcrypt from 'bcrypt';
+import { MongoClient } from 'mongodb';
 
 type User = {
     username: string,
     password: string,
 };
 
-const url = "mongodb://localhost/unsuper";
+const url = 'mongodb://localhost/unsuper';
 const main = async () => {
     const db = await MongoClient.connect(url);
 
     const login = async (user: User) => {
-        const databaseEntry = await db.collection("user").findOne({ username: user.username }, { fields: { password: true } });
-        console.log("databaseEntry", databaseEntry);
-        if (databaseEntry !== null && await bcrypt.compare(user.password, databaseEntry.password)) {
+        const databaseEntry = await db.collection('user').findOne(
+            { username: user.username }, { fields: { password: true } });
+        console.log('databaseEntry', databaseEntry);
+        if (databaseEntry !== null &&
+            await bcrypt.compare(user.password, databaseEntry.password)) {
             return true;
         } else {
             return false;
         }
     };
     const register = async (user: User) => {
-        const userEntry = await db.collection("user").findOne({ username: user.username });
+        const userEntry =
+            await db.collection('user').findOne({ username: user.username });
 
         if (userEntry === null) {
             const saltRounds = 14;
             const passwordHash = await bcrypt.hash(user.password, saltRounds);
-            await db.collection("user").insertOne({ username: user.username, password: passwordHash });
+            await db.collection('user').insertOne(
+                { username: user.username, password: passwordHash });
             return true;
         } else {
             return false;
         }
     };
 
-    const userObj: User = { username: "eiei3", password: "gum" };
+    const userObj: User = { username: 'eiei3', password: 'gum' };
 
-    console.log("login", await login(userObj));
-    console.log("register", await register(userObj));
+    console.log('login', await login(userObj));
+    console.log('register', await register(userObj));
 
 };
 

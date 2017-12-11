@@ -192,16 +192,20 @@ export class DataMatchChecker extends React.Component<DataMatchCheckerProps, Dat
                 <h2>Mark as</h2>
                 <div className="row">
                     <div className="col-md">
-                        <div className="btn btn-block btn-success" onClick={() => {
+                        <div className="btn btn-block btn-success" onClick={async () => {
                             if (this.state.matchData !== undefined) {
                                 console.log("Valid", this.state.matchData.match.matchId);
+                                const result = await $.post(`/api/mark-match/${this.state.matchData.match.matchId}`, { isValid: true });
+                                console.log('result', result);
                             }
                         }} >Valid</div>
                     </div>
                     <div className="col-md">
-                        <div className="btn btn-block btn-danger" onClick={() => {
+                        <div className="btn btn-block btn-danger" onClick={async () => {
                             if (this.state.matchData !== undefined) {
                                 console.log("Invalid", this.state.matchData.match.matchId);
+                                const result = await $.post(`/api/mark-match/${this.state.matchData.match.matchId}`, { isValid: false });
+                                console.log('result', result);
                             }
                         }} >Invalid</div>
                     </div>

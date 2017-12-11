@@ -52,13 +52,21 @@ export class ProjectDataBrowser extends React.Component<ProjectDataBrowserProps,
                     </tr>,
                 );
             }
+            if (rows.length === 0) {
+                rows.push(<tr key={0}>
+                    <th scope="row"></th>
+                    <td>Empty</td>
+                    <td></td>
+                    <td></td>
+                </tr>);
+            }
         } else {
             rows.push(<tr key={0}>
                 <th scope="row"></th>
                 <td>Loading</td>
                 <td></td>
                 <td></td>
-            </ tr>);
+            </tr>);
         }
         return <table className="table">
             <thead>

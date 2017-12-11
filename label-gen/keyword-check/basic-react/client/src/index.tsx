@@ -4,8 +4,13 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as App from "./components/App";
 
+function getUsername() {
+    console.log(document.cookie, document.cookie.split('=')[1]);
+    return document.cookie.split('=')[1];
+}
+
 export const global = {
-    userId: "user1",
+    userId: getUsername(),
 };
 
 function startup() {
