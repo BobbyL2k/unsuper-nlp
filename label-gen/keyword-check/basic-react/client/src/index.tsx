@@ -5,8 +5,9 @@ import * as ReactDOM from "react-dom";
 import * as App from "./components/App";
 
 function getUsername() {
-    console.log(document.cookie, document.cookie.split('=')[1]);
-    return document.cookie.split('=')[1];
+    const username = document.cookie.split(';')[0].split('=')[1];
+    console.log(document.cookie, username);
+    return username;
 }
 
 export const global = {
