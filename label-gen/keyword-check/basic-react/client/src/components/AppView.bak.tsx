@@ -1,4 +1,5 @@
 import * as React from "react";
+import { AppStates } from "../modules/App";
 import { DataMatchChecker } from "./DataMatchChecker";
 import { Navigation } from "./Navigation";
 import { ProjectBrowser } from "./ProjectBrowser";
@@ -9,10 +10,7 @@ export function validPath(path: string) {
     return pathStructure.length > 0 && pathStructure[0].toLowerCase() === "app";
 }
 
-export type AppProps = {
-    location: string,
-};
-export type AppStates = {
+export type AppViewStates = {
     lastProjectId: string,
     lastMatchId: string,
 };
@@ -21,17 +19,17 @@ const Display = (props: { yes: boolean, children: any }) => {
     return <div style={{ display: props.yes ? "" : "none" }}>{props.children}</div>;
 };
 
-export class App extends React.Component<AppProps, AppStates> {
-    constructor(props: AppProps) {
+export class AppView extends React.Component<AppStates, AppViewStates> {
+    constructor(props: AppStates) {
         super(props);
         this.state = {
             lastProjectId: "none",
-        } as Readonly<AppStates>;
+        } as Readonly<AppViewStates>;
     }
     public componentWillMount() {
         this.componentWillReceiveProps(this.props);
     }
-    public componentWillReceiveProps(newProps: AppProps) {
+    public componentWillReceiveProps(newProps: AppStates) {
         const path = getPathStructure(newProps.location);
         if (path[0] === "app" && path[1] === "project") {
             const projectId = path[2];

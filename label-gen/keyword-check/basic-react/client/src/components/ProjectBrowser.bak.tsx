@@ -1,18 +1,31 @@
 import * as $ from "jquery";
 import * as React from "react";
-import { ProjectListContent } from "../modules/App";
 
-export type ProjectBrowserProps = ProjectListContent;
+export type ProjectBrowserState = {
+    projectIndex: Array<{
+        A_ID: string,
+        C_PROJECT_NAME: string,
+        totalCount: number,
+        labelCount: number,
+    }> | undefined;
+};
 
-export class ProjectBrowser extends React.Component<ProjectBrowserProps, {}> {
-    constructor(props: ProjectBrowserProps) {
+export class ProjectBrowser extends React.Component<{}, ProjectBrowserState> {
+    constructor(props: {}) {
         super(props);
+        this.state = {
+            projectIndex: undefined,
+        } as Readonly<ProjectBrowserState>;
+    }
+    public async componentWillMount() {
+        const projectIndex = await $.getJSON("/api/project-index");
+        console.log("loaded projectIndex", projectIndex);
+        this.setState({ projectIndex });
     }
     public render() {
-        console.log(this.props, JSON.stringify(this.props));
         const rows = [];
-        if (this.props.dObjResult.status === "done") {
-            for (const entry of this.props.dObjResult.data) {
+        if (this.state.projectIndex !== undefined) {
+            for (const entry of this.state.projectIndex) {
                 rows.push(
                     <tr key={entry.A_ID}>
                         <th scope="row">
@@ -34,25 +47,10 @@ export class ProjectBrowser extends React.Component<ProjectBrowserProps, {}> {
                     </tr>,
                 );
             }
-            if (this.props.dObjResult.data.length === 0) {
-                rows.push(<tr key={0}>
-                    <th scope="row"></th>
-                    <td>Empty</td>
-                    <td></td>
-                    <td></td>
-                </ tr>);
-            }
-        } else if (this.props.dObjResult.status === "loading") {
+        } else {
             rows.push(<tr key={0}>
                 <th scope="row"></th>
                 <td>Loading</td>
-                <td></td>
-                <td></td>
-            </ tr>);
-        } else if (this.props.dObjResult.status === "failed") {
-            rows.push(<tr key={0}>
-                <th scope="row"></th>
-                <td>Failed to load</td>
                 <td></td>
                 <td></td>
             </ tr>);

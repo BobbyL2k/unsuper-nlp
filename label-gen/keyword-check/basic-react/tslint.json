@@ -7,7 +7,7 @@
     "rules": {
         "quotemark": [
             true,
-            "single",
+            "double",
             "avoid-escape"
         ],
         "no-console": false,
