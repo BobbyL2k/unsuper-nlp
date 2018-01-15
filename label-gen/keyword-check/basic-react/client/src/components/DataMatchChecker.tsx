@@ -196,7 +196,7 @@ export class DataMatchChecker extends React.Component<DataMatchCheckerProps, Dat
                             if (this.state.matchData !== undefined) {
                                 console.log("Valid", this.state.matchData.match.matchId);
                                 const result = await $.post(`/api/mark-match/${this.state.matchData.match.matchId}`, { isValid: true });
-                                console.log('result', result);
+                                console.log("result", result);
                             }
                         }} >Valid</div>
                     </div>
@@ -205,7 +205,7 @@ export class DataMatchChecker extends React.Component<DataMatchCheckerProps, Dat
                             if (this.state.matchData !== undefined) {
                                 console.log("Invalid", this.state.matchData.match.matchId);
                                 const result = await $.post(`/api/mark-match/${this.state.matchData.match.matchId}`, { isValid: false });
-                                console.log('result', result);
+                                console.log("result", result);
                             }
                         }} >Invalid</div>
                     </div>

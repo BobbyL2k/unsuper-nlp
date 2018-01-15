@@ -1,74 +1,85 @@
 import * as $ from "jquery";
 import * as React from "react";
 import { ProjectListContent } from "../modules/App";
+import { TableView, TableViewProps } from "./TableView";
 
 export type ProjectBrowserProps = ProjectListContent;
 
+type Keys = "A_ID" | "C_PROJECT_NAME" | "totalCount" | "labelCount";
+
 export class ProjectBrowser extends React.Component<ProjectBrowserProps, {}> {
+    private lastSortedBy?: string;
     constructor(props: ProjectBrowserProps) {
         super(props);
     }
     public render() {
-        console.log(this.props, JSON.stringify(this.props));
-        const rows = [];
+        const headers: TableViewProps<Keys>["headers"] = [
+            {
+                title: <div onClick={() => { this.sortBy("A_ID"); }}>ID</div>,
+                contentKey: "A_ID",
+                isHeader: true,
+            }, {
+                title: <div onClick={() => { this.sortBy("C_PROJECT_NAME"); }}>Project Name</div>,
+                contentKey: "C_PROJECT_NAME",
+            }, {
+                title: <div onClick={() => { this.sortBy("totalCount"); }}>Data Count</div>,
+                contentKey: "totalCount",
+            }, {
+                title: <div onClick={() => { this.sortBy("labelCount"); }}>Data Labeled Count</div>,
+                contentKey: "labelCount",
+            },
+        ];
+        let contents;
         if (this.props.dObjResult.status === "done") {
-            for (const entry of this.props.dObjResult.data) {
-                rows.push(
-                    <tr key={entry.A_ID}>
-                        <th scope="row">
-                            <a href={`/app/project/${entry.A_ID}`}>
-                                {entry.A_ID}
-                            </a>
-                        </th>
-                        <td>
-                            <a href={`/app/project/${entry.A_ID}`}>
-                                "{entry.C_PROJECT_NAME}"
-                            </a>
-                        </td>
-                        <td>
-                            {entry.totalCount}
-                        </td>
-                        <td>
-                            {entry.labelCount} ({entry.labelCount / entry.totalCount}%)
-                        </td>
-                    </tr>,
-                );
-            }
-            if (this.props.dObjResult.data.length === 0) {
-                rows.push(<tr key={0}>
-                    <th scope="row"></th>
-                    <td>Empty</td>
-                    <td></td>
-                    <td></td>
-                </ tr>);
-            }
-        } else if (this.props.dObjResult.status === "loading") {
-            rows.push(<tr key={0}>
-                <th scope="row"></th>
-                <td>Loading</td>
-                <td></td>
-                <td></td>
-            </ tr>);
-        } else if (this.props.dObjResult.status === "failed") {
-            rows.push(<tr key={0}>
-                <th scope="row"></th>
-                <td>Failed to load</td>
-                <td></td>
-                <td></td>
-            </ tr>);
+            contents = this.props.dObjResult.data.map((entry) => {
+                return {
+                    A_ID: (<a href={`/app/project/${entry.A_ID}`}>{entry.A_ID}</a>),
+                    C_PROJECT_NAME: (<a href={`/app/project/${entry.A_ID}`}>
+                        "{entry.C_PROJECT_NAME}"
+                    </a>),
+                    totalCount: `${entry.totalCount}`,
+                    labelCount: `${entry.labelCount} (${entry.labelCount / entry.totalCount * 100}%)`,
+                };
+            });
+
+        } else {
+            contents = [{
+                A_ID: "",
+                C_PROJECT_NAME: "Loading",
+                totalCount: "",
+                labelCount: "",
+            }];
         }
-        return <table className="table">
-            <thead>
-                <tr>
-                    <th scope="col">A_ID</th>
-                    <th scope="col">C_PROJECT_NAME</th>
-                    <th scope="col">Data Count</th>
-                    <th scope="col">Data Labeled</th>
-                </tr>
-            </thead>
-            <tbody>
-                {rows}
-            </tbody>
-        </table>;
+        return <TableView headers={headers} contents={contents} />;
+    }
+    private sortBy(columnName: string) {
+        if (this.props.dObjResult.status === "done") {
+            switch (columnName) {
+                case "totalCount":
+                case "labelCount":
+                    if (this.lastSortedBy === columnName) {
+                        this.props.dObjResult.data.sort((a: any, b: any) => a[columnName] - b[columnName]);
+                    } else {
+                        this.props.dObjResult.data.sort((a: any, b: any) => b[columnName] - a[columnName]);
+                    }
+                    break;
+                default:
+                    if (this.lastSortedBy === columnName) {
+                        this.props.dObjResult.data.sort((a: any, b: any) => a[columnName] < b[columnName] ? -1 : 1);
+                    } else {
+                        this.props.dObjResult.data.sort((a: any, b: any) => b[columnName] < a[columnName] ? -1 : 1);
+                    }
+
+                    break;
+            }
+            this.props.updateCallback();
+        }
+        if (this.lastSortedBy !== columnName) {
+            this.lastSortedBy = columnName;
+        } else {
+            this.lastSortedBy = undefined;
+        }
+
+        // sorted
     }
 }

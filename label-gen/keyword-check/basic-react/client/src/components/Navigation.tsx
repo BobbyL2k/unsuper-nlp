@@ -21,7 +21,7 @@ export class Navigation extends React.Component<NavigationProps, NavigationState
         for (let c = 0; c < path.length; c++) {
             if (c !== currentIndex) {
                 dirs.push(<li key={path[c].label} className="nav-item">
-                    <a className="nav-link" href={path[c].href}>{path[c].label}</a>
+                    <a className="nav-link" href={"/app/" + path[c].href}>{path[c].label}</a>
                 </li>);
             } else {
                 dirs.push(<li key={path[c].label} className="nav-item active">
