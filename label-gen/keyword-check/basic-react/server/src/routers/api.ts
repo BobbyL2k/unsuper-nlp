@@ -1,6 +1,6 @@
-import * as express from 'express';
-import * as fs from 'fs';
-import { ContentsModel, MatchesModel } from '../db';
+import * as express from "express";
+import * as fs from "fs";
+import { ContentsModel, MatchesModel } from "../db";
 
 export type ProjectIndex = Array<{
     A_ID: string,
@@ -13,8 +13,8 @@ const router = express.Router();
 
 const projectIndex: { [key: string]: object } = JSON.parse(
     fs.readFileSync(
-        __dirname + '/' +
-        './../../../../../../data/json/parsed/homedottech.json',
+        __dirname + "/" +
+        "./../../../../../../data/json/parsed/homedottech.json",
     )
         .toString());
 
@@ -23,7 +23,7 @@ const projectIndex: { [key: string]: object } = JSON.parse(
 //     next();
 // });
 
-router.get('/project-index', (req, res) => {
+router.get("/project-index", (req, res) => {
     Promise
         .all(Object.keys(projectIndex).map(async (key) => {
             const entry: any = projectIndex[key];
@@ -38,25 +38,25 @@ router.get('/project-index', (req, res) => {
             res.send(projectIndexEntries);
         })
         .catch((err) => {
-            console.error('API/project-index Error', err);
+            console.error("API/project-index Error", err);
         });
 });
 
-router.get('/project/:projectId', (req, res) => {
-    console.log('projectId', req.params.projectId);
+router.get("/project/:projectId", (req, res) => {
+    console.log("projectId", req.params.projectId);
     MatchesModel.find({
         projectId: req.params.projectId,
     }).then(async (entries) => {
         const result = await Promise.all(entries.map(async (entry) => {
-            const contentId = entry.get('contentId').split('-');
+            const contentId = entry.get("contentId").split("-");
             const content = await ContentsModel.findOne({
                 id: contentId[0],
             });
             // console.log(content, contentId);
             return {
-                matchId: entry.get('matchId'),
-                title: content ? content.get('title') : 'Not Found',
-                source: content ? content.get('source') : '',
+                matchId: entry.get("matchId"),
+                title: content ? content.get("title") : "Not Found",
+                source: content ? content.get("source") : "",
                 labeled: false,
             };
         }));
@@ -66,18 +66,18 @@ router.get('/project/:projectId', (req, res) => {
     });
 });
 
-router.get('/data/match/:matchId', (req, res) => {
-    console.log('matchId', req.params.matchId);
+router.get("/data/match/:matchId", (req, res) => {
+    console.log("matchId", req.params.matchId);
     (async () => {
         const match = await MatchesModel.findOne({
             matchId: req.params.matchId,
         });
         console.log(match);
         if (match === null) {
-            throw new Error('');
+            throw new Error("");
         }
         const content = await ContentsModel.findOne({
-            id: match.contentId.split('-')[0],
+            id: match.contentId.split("-")[0],
         });
         const validation = [];
         if (match.label === undefined) {
@@ -114,30 +114,30 @@ router.get('/data/match/:matchId', (req, res) => {
         });
 });
 
-router.post('/mark-match/:matchId', async (req, res) => {
+router.post("/mark-match/:matchId", async (req, res) => {
     console.log(req.params.matchId, req.body);
     const match = await MatchesModel.findOne({ matchId: req.params.matchId });
     if (match === null) {
         res.send({
             success: false,
-            message: 'match not found',
+            message: "match not found",
         });
     } else if (req.session === undefined) {
         res.send({
             success: false,
-            message: 'session error',
+            message: "session error",
         });
     } else {
-        let label = match.get('label');
+        let label = match.get("label");
         if (label === undefined) {
             label = {};
         }
         label[req.session.user] = {
-            isValid: req.body.isValid === 'true',
+            isValid: req.body.isValid === "true",
         };
-        console.log('new label', label);
+        console.log("new label", label);
         match.label = label;
-        match.markModified('label');
+        match.markModified("label");
         console.log(await match.save());
     }
 

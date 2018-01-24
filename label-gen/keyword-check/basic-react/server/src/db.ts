@@ -1,9 +1,8 @@
 import * as mongoose from "mongoose";
-import { Mongoose } from "mongoose";
 mongoose.Promise = Promise;
 const Schema = mongoose.Schema;
 
-mongoose.connect('mongodb://localhost/unsuper-nlp', { useMongoClient: true });
+mongoose.connect("mongodb://localhost/unsuper-nlp", { useMongoClient: true });
 
 export const MatchesSchema = new Schema({
     matchId: {
@@ -44,7 +43,7 @@ export const MatchesSchema = new Schema({
     },
 });
 
-export const MatchesModel = mongoose.model('Matches', MatchesSchema);
+export const MatchesModel = mongoose.model("Matches", MatchesSchema);
 
 export const ContentsSchema = new Schema({
     id: {
@@ -68,7 +67,7 @@ export const ContentsSchema = new Schema({
     },
 });
 
-export const ContentsModel = mongoose.model('Contents', ContentsSchema);
+export const ContentsModel = mongoose.model("Contents", ContentsSchema);
 
 export const UsersSchema = new Schema({
     id: {
@@ -83,4 +82,4 @@ export const UsersSchema = new Schema({
     },
 });
 
-export const UsersModel = mongoose.model('Users', UsersSchema);
+export const UsersModel = mongoose.model("Users", UsersSchema);
