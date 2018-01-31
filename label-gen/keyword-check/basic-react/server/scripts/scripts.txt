@@ -1,0 +1,4 @@
+node server/build/tools/projectLoader.js /Users/L2k-nForce/Dev/Chula/senior-project/unsuper-nlp/data/json/parsed/homedottech.json
+node server/build/tools/matchLoader.js /Users/L2k-nForce/Dev/Chula/senior-project/unsuper-nlp/data/json/matches/match_cleaned.json
+
+node server/build/tools/contentLoader.js /Users/L2k-nForce/Dev/Chula/senior-project/unsuper-nlp/data/json/posts/matched/pantip/matched_posts.json

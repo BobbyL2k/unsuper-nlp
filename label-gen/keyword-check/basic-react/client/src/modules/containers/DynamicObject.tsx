@@ -10,13 +10,11 @@ export type Result<T> =
         data: T,
     };
 
-// export type Status = Result<any>["status"];
-
 export class DynamicObject<T> {
     private storage: Result<T> = { status: "loading" };
     private eventListeners: Array<(storage: Result<T>) => void> = [];
-    constructor(getRequestPath: string) {
-        this.requestData(getRequestPath)
+    constructor(public url: Readonly<string>) {
+        this.requestData(this.url)
             .then(() => {
                 console.log("Data loaded", this.storage);
             })
@@ -30,12 +28,14 @@ export class DynamicObject<T> {
             eventListener(this.storage);
         }
     }
-    public rebindData(newGetRequestPath: string) {
-        this.storage = {
-            status: "loading",
-        };
+    public rebindData(newUrl: string) {
+        this.url = newUrl;
+        this.storage.status = "loading";
+        for (const eventListener of this.eventListeners) {
+            eventListener(this.storage);
+        }
         console.log("Loading new data");
-        this.requestData(newGetRequestPath)
+        this.requestData(newUrl)
             .then(() => {
                 console.log("New data loaded", this.storage);
             })

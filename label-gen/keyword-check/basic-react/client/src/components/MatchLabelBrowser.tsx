@@ -1,12 +1,16 @@
 import * as React from "react";
 import { Key } from "react";
-import { MatchContent } from "../modules/App";
-import { DynamicTableView, DynamicTableViewProps } from "./DynamicTableView";
-export type MatchLabelBrowserProps = MatchContent;
+import { MatchContent, Messenger } from "../modules/App";
+import { Result } from "../modules/containers/DynamicObject";
+import { dynamicObjResultToContent, TableView, TableViewProps } from "./TableView";
+export interface MatchLabelBrowserProps extends MatchContent {
+    messageCallback: Messenger;
+}
 
 export type MatchLabelBrowserStates = {};
 
 type Keys = "name" | "value";
+const matchLabelKeys = ["name", "value"];
 
 export class MatchLabelBrowser extends React.Component<MatchLabelBrowserProps, MatchLabelBrowserStates> {
     constructor(props: MatchLabelBrowserProps) {
@@ -31,10 +35,10 @@ export class MatchLabelBrowser extends React.Component<MatchLabelBrowserProps, M
             }
             return contents;
         }
-        let dataTableContents: DynamicTableViewProps<Keys>["contents"];
-        let matchTableContents: DynamicTableViewProps<Keys>["contents"];
-        let projectTableContents: DynamicTableViewProps<Keys>["contents"];
-        let markedTableContents: DynamicTableViewProps<Keys>["contents"];
+        let dataTableContents: Result<TableViewProps<Keys>["contents"]>;
+        let matchTableContents: Result<TableViewProps<Keys>["contents"]>;
+        let projectTableContents: Result<TableViewProps<Keys>["contents"]>;
+        let markedTableContents: Result<TableViewProps<Keys>["contents"]>;
         if (this.props.dObjResult.status === "done") {
             console.log(this.props.dObjResult);
             dataTableContents = {
@@ -65,7 +69,7 @@ export class MatchLabelBrowser extends React.Component<MatchLabelBrowserProps, M
                         <div className="badge btn-success" onClick={() => {
                             if (this.props.dObjResult.status === "done") {
                                 this.props.dObjResult.data.showAllContent = !this.props.dObjResult.data.showAllContent;
-                                this.props.updateCallback();
+                                this.props.messageCallback();
                             }
                         }} style={{ cursor: "pointer" }}>{this.props.dObjResult.data.showAllContent ? "hide" : "show all"}</div>
                     </span>;
@@ -97,54 +101,54 @@ export class MatchLabelBrowser extends React.Component<MatchLabelBrowserProps, M
             };
 
         } else {
-            const placeholderContentStatus = {
+            const placeholderContentStatus: Result<TableViewProps<Keys>["contents"]> = {
                 status: this.props.dObjResult.status,
-            };
-            dataTableContents = placeholderContentStatus as DynamicTableViewProps<Keys>["contents"];
-            matchTableContents = placeholderContentStatus as DynamicTableViewProps<Keys>["contents"];
-            projectTableContents = placeholderContentStatus as DynamicTableViewProps<Keys>["contents"];
-            markedTableContents = placeholderContentStatus as DynamicTableViewProps<Keys>["contents"];
+            } as Result<any>;
+            dataTableContents = placeholderContentStatus;
+            matchTableContents = placeholderContentStatus;
+            projectTableContents = placeholderContentStatus;
+            markedTableContents = placeholderContentStatus;
         }
-        return <div className="row">
-            <div className="col-md">
-                <h2>Data Info</h2>
-                <DynamicTableView headers={stdTableHeader} contents={dataTableContents} />
-            </div>
-            <div className="col-md">
-                <h2>Match Info</h2>
-                <DynamicTableView headers={stdTableHeader} contents={matchTableContents} />
-                <h2>Project Info</h2>
-                <DynamicTableView headers={stdTableHeader} contents={projectTableContents} />
-                <h2>Mark as</h2>
-                <div className="row">
-                    <div className="col-md">
-                        <div className="btn btn-block btn-success" onClick={async () => {
-                            // if (this.props.dObjResult.data.matchData !== undefined) {
-                            //     console.log("Valid", this.props.dObjResult.data.matchData.match.matchId);
-                            //     const result = await $.post(`/api/mark-match/${this.props.dObjResult.data.matchData.match.matchId}`, { isValid: true });
-                            //     console.log("result", result);
-                            // }
-                        }} >Valid</div>
-                    </div>
-                    <div className="col-md">
-                        <div className="btn btn-block btn-danger" onClick={async () => {
-                            // if (this.props.dObjResult.data.matchData !== undefined) {
-                            //     console.log("Invalid", this.props.dObjResult.data.matchData.match.matchId);
-                            //     const result = await $.post(`/api/mark-match/${this.props.dObjResult.data.matchData.match.matchId}`, { isValid: false });
-                            //     console.log("result", result);
-                            // }
-                        }} >Invalid</div>
-                    </div>
+        return <div className="container">
+            <div className="row">
+                <div className="col-md">
+                    <h2>Data Info</h2>
+                    <TableView headers={stdTableHeader} contents={dynamicObjResultToContent(dataTableContents, matchLabelKeys)} />
                 </div>
-                <h2>Marked as</h2>
-                <DynamicTableView headers={[{
-                    title: "User",
-                    contentKey: "userId",
-                    isHeader: true,
-                }, {
-                    title: "Value",
-                    contentKey: "isValid",
-                }]} contents={markedTableContents} />
+                <div className="col-md">
+                    <h2>Match Info</h2>
+                    <TableView headers={stdTableHeader} contents={dynamicObjResultToContent(matchTableContents, matchLabelKeys)} />
+                    <h2>Project Info</h2>
+                    <TableView headers={stdTableHeader} contents={dynamicObjResultToContent(projectTableContents, matchLabelKeys)} />
+                    <h2>Mark as</h2>
+                    <div className="row">
+                        <div className="col-md">
+                            <div className="btn btn-block btn-success" onClick={() => {
+                                this.props.messageCallback({
+                                    type: "mark-match",
+                                    valid: true,
+                                });
+                            }} >Valid</div>
+                        </div>
+                        <div className="col-md">
+                            <div className="btn btn-block btn-danger" onClick={() => {
+                                this.props.messageCallback({
+                                    type: "mark-match",
+                                    valid: false,
+                                });
+                            }} >Invalid</div>
+                        </div>
+                    </div>
+                    <h2>Marked as</h2>
+                    <TableView headers={[{
+                        title: "User",
+                        contentKey: "userId",
+                        isHeader: true,
+                    }, {
+                        title: "Value",
+                        contentKey: "isValid",
+                    }]} contents={dynamicObjResultToContent(markedTableContents, matchLabelKeys)} />
+                </div>
             </div>
         </div>;
     }

@@ -1,5 +1,7 @@
 import * as React from "react";
+import { Result } from "../modules/containers/DynamicObject";
 
+type Stringable = { toString: () => string };
 export type TableViewProps<Keys extends string> = {
     headers: Array<{
         title: string | JSX.Element,
@@ -7,12 +9,33 @@ export type TableViewProps<Keys extends string> = {
         isHeader?: boolean,
     }>,
     contents: Array<{
-        [key: string]: string | JSX.Element,
+        [key: string]: string | JSX.Element | Stringable,
     }>,
 };
 
 export type TableViewStates = {
 };
+
+export function dynamicObjResultToContent<Keys extends string>(result: Result<TableViewProps<Keys>["contents"]>, keys: Keys[]) {
+    let contents: TableViewProps<Keys>["contents"] = [{}];
+    switch (result.status) {
+        case "done":
+            contents = result.data;
+            break;
+        case "loading":
+            contents[0][keys[Math.min(keys.length - 1, 1)] as string] = "Loading";
+            break;
+        case "failed":
+            contents[0][keys[Math.min(keys.length - 1, 1)] as string] = "Failed to load data";
+            break;
+        default:
+            contents[0][keys[Math.min(keys.length - 1, 1)] as string] = "Unknown dynamic object status";
+            console.log("Unknown dynamic object status", result);
+            break;
+    }
+    return contents;
+
+}
 
 export class TableView<Keys extends string> extends React.Component<TableViewProps<Keys>, TableViewStates> {
     constructor(props: TableViewProps<Keys>) {

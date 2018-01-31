@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Social Listening Labeler Mock Page</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb"
+        crossorigin="anonymous">
+    <link rel="stylesheet" href="/public/font-awesome.min.css">
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+    <div id="app">
+        <div>
+            <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggler" aria-controls="navbarToggler"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarToggler">
+                    <a class="navbar-brand" href="/app">Social Listening</a>
+                    <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+                        Content Creater
+                    </ul>
+                    <div class="my-2 my-lg-0">
+                        <a id="user-logout-btn" class="btn btn-outline-success my-2 my-sm-0" href="/logout">...</a>
+                    </div>
+                </div>
+            </nav>
+            <div class="body container">
+                <div class="row">
+                    <div class="col-8">
+                        <h2>Data Info</h2>
+                        <div class="form-group row">
+                            <label for="id" class="col-sm-2 col-form-label">ID</label>
+                            <div class="col-sm-10">
+                                <form onsubmit="return false;">
+                                    <div class="input-group">
+                                        <input id="contentId-input" type="text" class="form-control" placeholder="ID">
+                                        <span class="input-group-btn">
+                                            <button id="load-btn" class="btn btn-primary" type="submit">Load</button>
+                                        </span>
+                                    </div>
+                                </form>
+                                <!-- <div class="form-control-plaintext" id="id" value="">35581359</div> -->
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="title" class="col-sm-2 col-form-label">Title</label>
+                            <div class="col-sm-10">
+                                <div class="form-control-plaintext" id="title" value="">-</div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Current Tagging</label>
+                            <div class="form-control" id="post-preview">
+                                Sample
+                                <span class="badge badge-primary">Sample</span>
+                                Sample
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label></label>Text Selection</label>
+                            <textarea readonly class="form-control" id="post-textarea" rows="3">Empty</textarea>
+                        </div>
+                        <div class="form-group row">
+                            <label for="time" class="col-sm-2 col-form-label">Time</label>
+                            <div class="col-sm-10">
+                                <div class="form-control-plaintext" id="time">-</div>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="source" class="col-sm-2 col-form-label">Source</label>
+                            <div class="col-sm-10">
+                                <div class="form-control-plaintext" id="source">-</div>
+                            </div>
+                        </div>
+                        <!-- <h2>Projects</h2>
+                        <div class="form-group row">
+                            <label for="project filter" class="col-sm-2 col-form-label">Filter</label>
+                            <div class="col-sm-10">
+                                <input type="email" class="form-control" id="project filter" placeholder="ID, Name">
+                            </div>
+                        </div>
+                        <div>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th key={c} scope="col">ProjectId</th>
+                                        <th key={c} scope="col">Name</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr key={rows.length}>
+                                        <td key={rowContent.length}>
+                                            123
+                                        </td>
+                                        <td key={rowContent.length}>
+                                            {content[header.contentKey]}
+                                        </td>
+                                    </tr>
+                                    <tr key={rows.length}>
+                                        <td key={rowContent.length}>
+                                            124
+                                        </td>
+                                        <td key={rowContent.length}>
+                                            {content[header.contentKey]}
+                                        </td>
+                                    </tr>
+                                    <tr key={rows.length}>
+                                        <td key={rowContent.length}>
+                                            125
+                                        </td>
+                                        <td key={rowContent.length}>
+                                            {content[header.contentKey]}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="table-page-select-bottom-bar">
+                                <div class="btn-group page-select-bar">
+                                    <button type="button" class="btn btn-primary">&laquo;</button>
+                                    <div class="btn btn-light disabled">
+                                        Displaying 0 - 0 of 0
+                                    </div>
+                                    <button type="button" class="btn btn-primary">&raquo;</button>
+                                </div>
+                            </div>
+                    </div> -->
+                    </div>
+                    <div class="col-4">
+                        <h2>Submission Info</h2>
+                        <div class="form-group">
+                            <label for="selected-text" class="col-sm-2 col-form-label">Selection</label>
+                            <div class="col-sm-10">
+                                <input type="text" readonly class="form-control-plaintext" id="selected-text" value="">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="selected-size" class="col-sm-2 col-form-label">Size</label>
+                            <div class="col-sm-10">
+                                <input type="text" readonly class="form-control-plaintext" id="selected-size" value="0">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md">
+                                <div id="submit-btn" class="btn btn-block btn-success">Submit</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="index.js"></script>
+</body>
+
+</html>

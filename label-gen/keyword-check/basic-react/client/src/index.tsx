@@ -36,7 +36,6 @@ export const global = {
                 // console.log("path", path);
                 if (path !== document.location.pathname) {
                     // console.log("Moved from", document.location.pathname, "to", path);
-                    history.pushState(null, "", path);
                     app.onNewPath(path);
                 } else {
                     console.log("User tried going to the same path");

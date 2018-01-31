@@ -5,3 +5,4 @@ __pycache__/
 *.ipynb
 data-processor/string-distance/cpp/build
 bin/
+label-gen/db-dump

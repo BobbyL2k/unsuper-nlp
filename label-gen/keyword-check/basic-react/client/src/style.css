@@ -2,3 +2,16 @@
     color: grey;
     cursor: pointer;
 }
+
+.page-select-bar {
+    display: inline-block;
+}
+.fixed-bottom-bar {
+    position: fixed;
+    width: 100vw;
+    bottom: 0;
+}
+
+.table-page-select-bottom-bar {
+    text-align: center;
+}

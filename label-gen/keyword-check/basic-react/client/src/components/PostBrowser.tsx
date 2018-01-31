@@ -1,15 +1,13 @@
 import * as React from "react";
-import { PostListContent } from "../modules/App";
+import { PostKeys, ProjectPostListContent } from "../modules/App";
 import { TableView, TableViewProps } from "./TableView";
 
-export type PostBrowserProps = PostListContent;
+export type PostBrowserProps = ProjectPostListContent;
 
 export type PostBrowserStates = {
 };
 
-type Keys = "matchId" | "title" | "source" | "labeled";
-interface PostTableViewType { new(): TableView<Keys>; }
-const PostTableView = TableView as PostTableViewType;
+type Keys = PostKeys;
 
 export class PostBrowser extends React.Component<PostBrowserProps, PostBrowserStates> {
     constructor(props: PostBrowserProps) {
@@ -32,28 +30,21 @@ export class PostBrowser extends React.Component<PostBrowserProps, PostBrowserSt
                 contentKey: "labeled",
             },
         ];
-        let contents;
-        if (this.props.dObjResult.status === "done") {
-            contents = this.props.dObjResult.data.map((entry) => {
-                const linkToMatchData = `/app/project/${this.props.projectId}/${entry.matchId}`;
+        const contents = this.props.contents.map((entry) => {
+            if (entry.matchId === undefined) {
+                return entry;
+            } else {
+                const linkToMatchData = `/app/project/${this.props.projectId}/match/${entry.matchId}`;
                 return {
                     matchId: (<a href={linkToMatchData}>{entry.matchId}</a>),
                     title: (<a href={linkToMatchData}>
                         "{entry.title}"
-                    </a>),
+                        </a>),
                     source: `${entry.source}`,
                     labeled: `${entry.labeled ? "Yes" : "No"}`,
                 };
-            });
-
-        } else {
-            contents = [{
-                matchId: "",
-                title: "Loading",
-                source: "",
-                labeled: "",
-            }];
-        }
-        return <PostTableView headers={headers} contents={contents} />;
+            }
+        });
+        return <TableView headers={headers} contents={contents} />;
     }
 }

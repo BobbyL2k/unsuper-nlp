@@ -1,17 +1,16 @@
 import * as $ from "jquery";
 import * as React from "react";
-import { ProjectListContent } from "../modules/App";
-import { TableView, TableViewProps } from "./TableView";
+import { Messenger, ProjectKeys, ProjectListContent, SortType } from "../modules/App";
+import { dynamicObjResultToContent, TableView, TableViewProps } from "./TableView";
+// import { DynamicTableView, DynamicTableViewProps } from "./DynamicTableView";
 
-export type ProjectBrowserProps = ProjectListContent;
+export interface ProjectBrowserProps extends ProjectListContent {
+    messageCallback: Messenger;
+}
 
-type Keys = "A_ID" | "C_PROJECT_NAME" | "totalCount" | "labelCount";
-
-type SortType = "ascending" | "descending";
+type Keys = ProjectKeys;
 
 export class ProjectBrowser extends React.Component<ProjectBrowserProps, {}> {
-    private lastSortedBy?: Keys;
-    private sortType?: SortType;
     constructor(props: ProjectBrowserProps) {
         super(props);
     }
@@ -30,30 +29,31 @@ export class ProjectBrowser extends React.Component<ProjectBrowserProps, {}> {
         const headers: TableViewProps<Keys>["headers"] = [
             {
                 title: <div className="clickable" onClick={() => { this.sortBy("A_ID"); }}>
-                    ID {conditionalChevron(this.lastSortedBy === "A_ID", this.sortType)}
+                    ID {conditionalChevron(this.props.lastSortedBy === "A_ID", this.props.sortType)}
                 </div>,
                 contentKey: "A_ID",
                 isHeader: true,
             }, {
                 title: <div className="clickable" onClick={() => { this.sortBy("C_PROJECT_NAME"); }}>
-                    Project Name {conditionalChevron(this.lastSortedBy === "C_PROJECT_NAME", this.sortType)}
+                    Project Name {conditionalChevron(this.props.lastSortedBy === "C_PROJECT_NAME", this.props.sortType)}
                 </div>,
                 contentKey: "C_PROJECT_NAME",
             }, {
                 title: <div className="clickable" onClick={() => { this.sortBy("totalCount"); }}>
-                    Data Count {conditionalChevron(this.lastSortedBy === "totalCount", this.sortType)}
+                    Data Count {conditionalChevron(this.props.lastSortedBy === "totalCount", this.props.sortType)}
                 </div>,
                 contentKey: "totalCount",
             }, {
                 title: <div className="clickable" onClick={() => { this.sortBy("labelCount"); }}>
-                    Data Labeled Count {conditionalChevron(this.lastSortedBy === "labelCount", this.sortType)}
+                    Data Labeled Count {conditionalChevron(this.props.lastSortedBy === "labelCount", this.props.sortType)}
                 </div>,
                 contentKey: "labelCount",
             },
         ];
-        let contents;
-        if (this.props.dObjResult.status === "done") {
-            contents = this.props.dObjResult.data.map((entry) => {
+        const contents = this.props.contents.map((entry) => {
+            if (entry.A_ID === undefined) {
+                return entry;
+            } else {
                 return {
                     A_ID: (<a href={`/app/project/${entry.A_ID}`}>{entry.A_ID}</a>),
                     C_PROJECT_NAME: (<a href={`/app/project/${entry.A_ID}`}>
@@ -62,47 +62,11 @@ export class ProjectBrowser extends React.Component<ProjectBrowserProps, {}> {
                     totalCount: `${entry.totalCount}`,
                     labelCount: `${entry.labelCount} (${entry.labelCount / entry.totalCount * 100}%)`,
                 };
-            });
-
-        } else {
-            contents = [{
-                A_ID: "",
-                C_PROJECT_NAME: "Loading",
-                totalCount: "",
-                labelCount: "",
-            }];
-        }
+            }
+        });
         return <TableView headers={headers} contents={contents} />;
     }
     private sortBy(columnName: Keys) {
-        if (this.props.dObjResult.status === "done") {
-            if (this.lastSortedBy === columnName && this.sortType === "ascending") {
-                this.sortType = "descending";
-                switch (columnName) {
-                    case "totalCount":
-                    case "labelCount":
-                        this.props.dObjResult.data.sort((a: any, b: any) => b[columnName] - a[columnName]);
-                        break;
-                    default:
-                        this.props.dObjResult.data.sort((a: any, b: any) => b[columnName] < a[columnName] ? -1 : 1);
-                        break;
-                }
-            } else {
-                this.sortType = "ascending";
-                switch (columnName) {
-                    case "totalCount":
-                    case "labelCount":
-                        this.props.dObjResult.data.sort((a: any, b: any) => a[columnName] - b[columnName]);
-                        break;
-                    default:
-                        this.props.dObjResult.data.sort((a: any, b: any) => a[columnName] < b[columnName] ? -1 : 1);
-                        break;
-                }
-            }
-            this.lastSortedBy = columnName;
-            console.log("sorting", this.sortType, columnName);
-            this.props.updateCallback();
-        }
-        // sorted
+        this.props.messageCallback({ type: "sort", by: columnName });
     }
 }

@@ -60,7 +60,7 @@ const auth = () => {
     const loginFile = fs.readFileSync(__dirname + '/' + './../../client/public/login.html').toString();
     router.get('/login', (req, res) => {
         if (req.session && req.session.login) {
-            res.redirect('/app/');
+            res.redirect('/');
         } else {
             res.send(loginFile);
         }
