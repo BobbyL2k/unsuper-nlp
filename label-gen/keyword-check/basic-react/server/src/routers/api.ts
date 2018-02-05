@@ -97,7 +97,7 @@ router.get("/data/match/:contentId/:partialMatchId", (req, res) => {
 
         const project = await projects.findOne({
             id: matchIdParts[3],
-        })
+        });
         if (project === null) {
             throw Error(`Project "${matchIdParts[3]}" not found`);
         }
@@ -109,7 +109,7 @@ router.get("/data/match/:contentId/:partialMatchId", (req, res) => {
             throw Error(`Match with "${matchId}" not found`);
         }
         if (matchEntry.label === undefined) {
-            matchEntry.label = {}
+            matchEntry.label = {};
         }
 
         const content = await contents.findOne({
@@ -141,7 +141,7 @@ router.get("/data/match/:contentId/:partialMatchId", (req, res) => {
                 projectName: project.info.C_PROJECT_NAME,
             },
             match: {
-                matchId: matchId,
+                matchId,
                 start: matchEntry.from,
                 end: matchEntry.to,
             },
@@ -153,46 +153,108 @@ router.get("/data/match/:contentId/:partialMatchId", (req, res) => {
     });
 });
 
-router.get("/data/content-pantip-post/:topicId", (req, res) => {
+router.get("/data/content/*?", (req, res) => {
     connectDb(async (contents, projects) => {
-        const topicId = req.params.topicId.toString();
-        const contentId = `${topicId}/post`;
-        console.log("contentId", contentId);
-        let content = await contents.findOne({
-            id: contentId,
-        });
-
-        if (content === null) {
-            console.log("Not found, need to load content");
-            const html = await pantip.loadPageHtml(topicId);
-            const $ = cheerio.load(html);
-            const title = $(".display-post-title").text().trim();
-            const post = $(".display-post-story:not(.main-comment)").text().trim();
-            const time = $(".display-post-timestamp abbr").attr("data-utime");
-
-            if (post.length === 0) {
-                throw Error("unable to fetch content from pantip");
-
-            }
-
-            content = {
+        let contentId;
+        let content;
+        if (req.params[0] !== undefined) {
+            contentId = req.params[0].toString();
+            console.log("contentId", contentId);
+            content = await contents.findOne({
                 id: contentId,
-                text: post,
-                info: { title, time, source: "pantip" }
-            };
-
-            const dbResult = await contents.insertOne(content);
-            if (dbResult.result.ok !== 1) {
-                throw Error(`Database not acknowledged ${dbResult}`);
-            }
+            });
+        } else {
+            console.log("No supplied contentId");
+            content = await contents.findOne({});
         }
-
+        if (content === null) {
+            throw Error(`Content ${contentId} not found`);
+        }
         res.send(content);
     }).catch((err) => {
         console.log(err);
         res.status(500).send(err.toString());
     });
 });
+
+router.get("/data/next-content/*?", (req, res) => {
+    connectDb(async (contents, projects) => {
+        const contentId = req.params[0].toString();
+        console.log("contentId", contentId);
+        const content = (await contents.find({
+            id: { $lt: contentId },
+        }).sort({ id: -1 }).limit(1).toArray())[0];
+        if (content === null) {
+            throw Error(`Content next to ${contentId} not found`);
+        }
+        res.send(content);
+    }).catch((err) => {
+        console.log(err);
+        res.status(500).send(err.toString());
+    });
+});
+
+router.get("/data/prev-content/*?", (req, res) => {
+    connectDb(async (contents, projects) => {
+        const contentId = req.params[0].toString();
+        console.log("contentId", contentId);
+        const content = (await contents.find({
+            id: { $gt: contentId },
+        }).sort({ id: 1 }).limit(1).toArray())[0];
+        if (content === null) {
+            throw Error(`Content prev to ${contentId} not found`);
+        }
+        res.send(content);
+    }).catch((err) => {
+        console.log(err);
+        res.status(500).send(err.toString());
+    });
+});
+
+// router.get("/data/content-pantip-post/:topicId", (req, res) => {
+//     connectDb(async (contents, projects) => {
+//         const topicId = req.params.topicId.toString();
+//         const contentId = `${topicId}/post`;
+//         console.log("contentId", contentId);
+//         let content = await contents.findOne({
+//             id: contentId,
+//         });
+
+//         if (content === null) {
+//             console.log("Not found, need to load content");
+//             try {
+//                 const html = await pantip.loadPageHtml(topicId);
+//                 const $ = cheerio.load(html);
+//                 const title = $(".display-post-title").text().trim();
+//                 const post = $(".display-post-story:not(.main-comment)").text().trim();
+//                 const time = $(".display-post-timestamp abbr").attr("data-utime");
+
+//                 if (post.length === 0) {
+//                     throw Error("unable to fetch content from pantip");
+
+//                 }
+//                 content = {
+//                     id: contentId,
+//                     text: post,
+//                     info: { title, time, source: "pantip" },
+//                 };
+
+//                 const dbResult = await contents.insertOne(content);
+//                 if (dbResult.result.ok !== 1) {
+//                     throw Error(`Database not acknowledged ${dbResult}`);
+//                 }
+//             } catch (err) {
+//                 throw Error(`Error fetching content from pantip ${err}`);
+//             }
+
+//         }
+
+//         res.send(content);
+//     }).catch((err) => {
+//         console.log(err);
+//         res.status(500).send(err.toString());
+//     });
+// });
 
 router.post("/data/mark-content/:topicId/:contentType", (req, res) => {
     if (req.session === undefined || req.session.user === undefined) {
@@ -206,14 +268,14 @@ router.post("/data/mark-content/:topicId/:contentType", (req, res) => {
 
     connectDb(async (contents, projects) => {
         const content = await contents.findOne({
-            id: `${req.params.topicId}/${req.params.contentType}`
+            id: `${req.params.topicId}/${req.params.contentType}`,
         });
 
         if (content === null) {
             throw Error(`content not found with id ${req.params.topicId}/${req.params.contentType}`);
         }
 
-        const [type, from, to] = req.body.tag.toString().split('-');
+        const [type, from, to] = req.body.tag.toString().split("-");
         if (type === "text") {
             const serverGot = content.text.slice(from, to);
             const verifyStr = req.body.verify.toString();
@@ -233,6 +295,45 @@ router.post("/data/mark-content/:topicId/:contentType", (req, res) => {
             {
                 id: contentId,
             }, { $set });
+
+        if (dbResult.ok !== 1) {
+            throw Error(`Database not ok ${dbResult}`);
+        }
+        res.send({ ok: true });
+
+    }).catch((err) => {
+        console.log(err);
+        res.status(500).send(err.toString());
+    });
+});
+
+router.post("/data/unmark-content/*?", (req, res) => {
+    if (req.session === undefined || req.session.user === undefined) {
+        return res.send({
+            success: false,
+            message: "session error",
+        });
+    }
+
+    console.log(req.body);
+
+    connectDb(async (contents, projects) => {
+        const content = await contents.findOne({
+            id: `${req.params[0]}`,
+        });
+
+        if (content === null) {
+            throw Error(`content not found with id ${req.params[0]}`);
+        }
+
+        const contentId = req.params[0].toString();
+        console.log("contentId", contentId);
+        const $unset: any = {};
+        $unset[`tag.${req.body.tag.toString()}`] = true;
+        const dbResult = await contents.findOneAndUpdate(
+            {
+                id: contentId,
+            }, { $unset });
 
         if (dbResult.ok !== 1) {
             throw Error(`Database not ok ${dbResult}`);
@@ -266,7 +367,7 @@ router.post("/mark-match/:contentId/:partialMatchId", (req, res) => {
 
         const project = await projects.findOne({
             id: matchIdParts[3],
-        })
+        });
         if (project === null) {
             throw Error(`Project "${matchIdParts[3]}" not found`);
         }
@@ -278,15 +379,15 @@ router.post("/mark-match/:contentId/:partialMatchId", (req, res) => {
             throw Error(`Match with "${matchId}" not found`);
         }
 
-        const set: any = {}
+        const set: any = {};
         set[`matches.${matchId}.label.${req.session.user}`] = { isValid: req.body.isValid === "true" };
 
         await projects.findOneAndUpdate(
             {
-                id: matchIdParts[3]
+                id: matchIdParts[3],
             }, {
                 $set: set,
-            })
+            });
 
         res.send(true);
     }).catch((err) => {

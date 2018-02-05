@@ -17,7 +17,7 @@ connectDb(async (contents, projects) => {
             .map((s) => JSON.parse(s));
     let entry = 0;
     let duplicate = 0;
-    await Promise.all(inputFiles.map(async (obj) => {
+    for (const obj of inputFiles) {
         const id = `${obj.id}/post`;
         const result = await contents.findOneAndUpdate(
             {
@@ -41,7 +41,7 @@ connectDb(async (contents, projects) => {
             duplicate++;
         }
         console.log(`ran ${++entry}, duplicate ${duplicate}`);
-    }));
+    }
     console.log(`${duplicate} duplicates of ${entry}`);
     console.log(`Rate ${Math.round(duplicate / entry * 100)}%`);
 }).catch((err) => {
