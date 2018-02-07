@@ -442,7 +442,7 @@ router.post("/data/create-content/", (req, res) => {
 
         console.log("user", user);
 
-        if (user === undefined || user.value.lastEntryIndex === undefined) {
+        if (user.value === undefined || user.value.lastEntryIndex === undefined) {
             throw Error("Error retrieving id");
         }
 
