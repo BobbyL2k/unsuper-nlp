@@ -1,11 +1,11 @@
-import * as bcrypt from 'bcrypt';
-import * as time from 'clean-time';
-import * as connectMongo from 'connect-mongo';
-import * as cookieParser from 'cookie-parser';
-import * as express from 'express';
-import * as session from 'express-session';
-import * as fs from 'fs';
-import { UsersModel } from './db';
+import * as bcrypt from "bcrypt";
+import * as time from "clean-time";
+import * as connectMongo from "connect-mongo";
+import * as cookieParser from "cookie-parser";
+import * as express from "express";
+import * as session from "express-session";
+import * as fs from "fs";
+import { UsersModel } from "./db";
 
 const auth = () => {
 
@@ -32,7 +32,9 @@ const auth = () => {
         }
     });
     router.post("/register", async (req, res) => {
-        if (req.body.lg_password !== req.body.cn_password) {
+        if (/^[a-z0-9]+$/i.test(req.body.lg_username) !== true) {
+            res.send("The username must only contains a-z, A-Z, or numbers (0-9) characters.");
+        } else if (req.body.lg_password !== req.body.cn_password) {
             res.send("The confirmation password do not match!");
         } else if (null !== await UsersModel.findOne({ id: req.body.lg_username })) {
             res.send("The username has been taken!");

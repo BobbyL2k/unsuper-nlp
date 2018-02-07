@@ -45,7 +45,7 @@ app.use(auth());
 
 // Redirect default path to App
 app.get("/", (req, res) => {
-    res.redirect("/page/content-creater/");
+    res.redirect("/page/content-tagger/");
 });
 
 // Serve App

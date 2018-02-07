@@ -1,6 +1,6 @@
 import * as cheerio from "cheerio";
 import * as express from "express";
-import { connectDb, ProjectSchema } from "../nlp-db";
+import { connectDb, ContentSchema, ProjectSchema } from "../nlp-db";
 import * as pantip from "../tools/pantip";
 
 export type ProjectIndex = Array<{
@@ -153,6 +153,58 @@ router.get("/data/match/:contentId/:partialMatchId", (req, res) => {
     });
 });
 
+router.post("/mark-match/:contentId/:partialMatchId", (req, res) => {
+    if (req.session === undefined || req.session.user === undefined) {
+        return res.send({
+            success: false,
+            message: "session error",
+        });
+    }
+
+    connectDb(async (contents, projects) => {
+        if (req.session === undefined || req.session.user === undefined) {
+            throw Error(`Session Error ${JSON.stringify(req.session)}`);
+        }
+        const matchId = req.params.contentId.toString() + "/" + req.params.partialMatchId.toString();
+        console.log("matchId", matchId);
+        const matchIdParts = matchId.split("-");
+        if (matchIdParts.length !== 4) {
+            throw Error(`Invalid request of "${matchIdParts}"`);
+        }
+
+        const project = await projects.findOne({
+            id: matchIdParts[3],
+        });
+        if (project === null) {
+            throw Error(`Project "${matchIdParts[3]}" not found`);
+        }
+        if (project.matches === undefined) {
+            throw Error(`No matches exist for "${project.id}"`);
+        }
+        const matchEntry = project.matches[matchId];
+        if (matchEntry === undefined) {
+            throw Error(`Match with "${matchId}" not found`);
+        }
+
+        const set: any = {};
+        set[`matches.${matchId}.label.${req.session.user}`] = { isValid: req.body.isValid === "true" };
+
+        await projects.findOneAndUpdate(
+            {
+                id: matchIdParts[3],
+            }, {
+                $set: set,
+            });
+
+        res.send(true);
+    }).catch((err) => {
+        console.log(err);
+        res.status(500).send(err.toString());
+    });
+});
+
+// Content Tagger
+
 router.get("/data/content/*?", (req, res) => {
     connectDb(async (contents, projects) => {
         let contentId;
@@ -169,6 +221,23 @@ router.get("/data/content/*?", (req, res) => {
         }
         if (content === null) {
             throw Error(`Content ${contentId} not found`);
+        }
+        res.send(content);
+    }).catch((err) => {
+        console.log(err);
+        res.status(500).send(err.toString());
+    });
+});
+
+router.get("/data/unlabeled-content/*?", (req, res) => {
+    connectDb(async (contents, projects) => {
+        const content = (await contents
+            .find({ tag: { $not: { $gt: {} } } })
+            .sort({ id: -1 })
+            .limit(1)
+            .toArray())[0];
+        if (content === null) {
+            throw Error(`No unlabeled content is found`);
         }
         res.send(content);
     }).catch((err) => {
@@ -211,51 +280,6 @@ router.get("/data/prev-content/*?", (req, res) => {
     });
 });
 
-// router.get("/data/content-pantip-post/:topicId", (req, res) => {
-//     connectDb(async (contents, projects) => {
-//         const topicId = req.params.topicId.toString();
-//         const contentId = `${topicId}/post`;
-//         console.log("contentId", contentId);
-//         let content = await contents.findOne({
-//             id: contentId,
-//         });
-
-//         if (content === null) {
-//             console.log("Not found, need to load content");
-//             try {
-//                 const html = await pantip.loadPageHtml(topicId);
-//                 const $ = cheerio.load(html);
-//                 const title = $(".display-post-title").text().trim();
-//                 const post = $(".display-post-story:not(.main-comment)").text().trim();
-//                 const time = $(".display-post-timestamp abbr").attr("data-utime");
-
-//                 if (post.length === 0) {
-//                     throw Error("unable to fetch content from pantip");
-
-//                 }
-//                 content = {
-//                     id: contentId,
-//                     text: post,
-//                     info: { title, time, source: "pantip" },
-//                 };
-
-//                 const dbResult = await contents.insertOne(content);
-//                 if (dbResult.result.ok !== 1) {
-//                     throw Error(`Database not acknowledged ${dbResult}`);
-//                 }
-//             } catch (err) {
-//                 throw Error(`Error fetching content from pantip ${err}`);
-//             }
-
-//         }
-
-//         res.send(content);
-//     }).catch((err) => {
-//         console.log(err);
-//         res.status(500).send(err.toString());
-//     });
-// });
-
 router.post("/data/mark-content/:topicId/:contentType", (req, res) => {
     if (req.session === undefined || req.session.user === undefined) {
         return res.send({
@@ -270,31 +294,77 @@ router.post("/data/mark-content/:topicId/:contentType", (req, res) => {
         const content = await contents.findOne({
             id: `${req.params.topicId}/${req.params.contentType}`,
         });
-
         if (content === null) {
             throw Error(`content not found with id ${req.params.topicId}/${req.params.contentType}`);
         }
+        if (content.tag === undefined) {
+            content.tag = {};
+        }
+        const tags = Object.keys(content.tag).filter((tagEntry: string) => {
+            return tagEntry.split("-")[0] === "text";
+        });
 
         const [type, from, to] = req.body.tag.toString().split("-");
-        if (type === "text") {
+        if (type !== "text") {
+            throw Error(`param type "${type}" not supported`);
+        }
+
+        function tagStrToObj(str: string) {
+            const [typeStr, fromStr, toStr] = str.split("-");
+            if (typeStr !== "text") {
+                throw Error(`Invalid Tag ${str}`);
+            }
+            return { from: parseInt(fromStr, 10), to: parseInt(toStr, 10), str };
+        }
+
+        function overlap(tagObjA: any, tagObjB: any) {
+            return (
+                tagObjA.from <= tagObjB.from && tagObjB.from < tagObjA.to ||
+                tagObjA.from < tagObjB.to && tagObjB.to <= tagObjA.to ||
+                tagObjB.from <= tagObjA.from && tagObjA.from < tagObjB.to ||
+                tagObjB.from < tagObjA.to && tagObjA.to <= tagObjB.to
+            );
+        }
+
+        const $set: any = {};
+        const $unset: any = {};
+        let option;
+        const topicId = req.params.topicId.toString();
+        const contentType = req.params.contentType.toString();
+        const contentId = `${topicId}/${contentType}`;
+        console.log("contentId", contentId);
+        if (from !== "none") {
             const serverGot = content.text.slice(from, to);
             const verifyStr = req.body.verify.toString();
             if (serverGot !== verifyStr) {
                 throw Error(`Verification failed "${serverGot}" !== ${verifyStr}`);
             }
+
+            const newTag = { from, to };
+            for (const tag of tags.map(tagStrToObj)) {
+                if (overlap(tag, newTag)) {
+                    throw Error(`New Tag Overlap ${JSON.stringify(newTag)}`);
+                }
+            }
+
+            $set[`tag.${type}-${from}-${to}`] = true;
+            $unset["tag.text-none"] = true;
+            option = { $set, $unset };
         } else {
-            throw Error(`param type "${type}" not supported`);
+            if (tags.length === 0 || (tags.length === 1 && tags[0] === "text-none")) {
+                $set["tag.text-none"] = true;
+                option = { $set };
+            } else {
+                throw Error("No Tag can't be used on contents already with a tag " + JSON.stringify(tags));
+            }
         }
-        const topicId = req.params.topicId.toString();
-        const contentType = req.params.contentType.toString();
-        const contentId = `${topicId}/${contentType}`;
-        console.log("contentId", contentId);
-        const $set: any = {};
-        $set[`tag.${type}-${from}-${to}`] = true;
+
         const dbResult = await contents.findOneAndUpdate(
             {
                 id: contentId,
-            }, { $set });
+            }, option);
+
+        console.log("dbResult", dbResult);
 
         if (dbResult.ok !== 1) {
             throw Error(`Database not ok ${dbResult}`);
@@ -346,50 +416,52 @@ router.post("/data/unmark-content/*?", (req, res) => {
     });
 });
 
-router.post("/mark-match/:contentId/:partialMatchId", (req, res) => {
-    if (req.session === undefined || req.session.user === undefined) {
-        return res.send({
-            success: false,
-            message: "session error",
-        });
-    }
+// Content Creator
 
-    connectDb(async (contents, projects) => {
+router.post("/data/create-content/", (req, res) => {
+
+    console.log(req.body);
+
+    connectDb(async (contents, projects, users) => {
         if (req.session === undefined || req.session.user === undefined) {
             throw Error(`Session Error ${JSON.stringify(req.session)}`);
         }
-        const matchId = req.params.contentId.toString() + "/" + req.params.partialMatchId.toString();
-        console.log("matchId", matchId);
-        const matchIdParts = matchId.split("-");
-        if (matchIdParts.length !== 4) {
-            throw Error(`Invalid request of "${matchIdParts}"`);
-        }
 
-        const project = await projects.findOne({
-            id: matchIdParts[3],
-        });
-        if (project === null) {
-            throw Error(`Project "${matchIdParts[3]}" not found`);
-        }
-        if (project.matches === undefined) {
-            throw Error(`No matches exist for "${project.id}"`);
-        }
-        const matchEntry = project.matches[matchId];
-        if (matchEntry === undefined) {
-            throw Error(`Match with "${matchId}" not found`);
-        }
-
-        const set: any = {};
-        set[`matches.${matchId}.label.${req.session.user}`] = { isValid: req.body.isValid === "true" };
-
-        await projects.findOneAndUpdate(
+        const user = await users.findOneAndUpdate(
             {
-                id: matchIdParts[3],
+                id: req.session.user,
             }, {
-                $set: set,
+                $setOnInsert: {
+                    id: req.session.user,
+                },
+                $inc: { lastEntryIndex: 1 },
+            }, {
+                upsert: true,
+                returnOriginal: false,
             });
 
-        res.send(true);
+        console.log("user", user);
+
+        if (user === undefined || user.value.lastEntryIndex === undefined) {
+            throw Error("Error retrieving id");
+        }
+
+        const text: string = req.body.text.toString();
+        const url: string = req.body.url;
+        const id: string = `${req.session.user}/${user.value.lastEntryIndex}`;
+        const content: ContentSchema = { id, text, info: { url } };
+
+        console.log("content", content);
+
+        const dbResult = await contents.insertOne(content);
+
+        // console.log("dbResult", dbResult.result);
+
+        if (dbResult.result.ok !== 1) {
+            throw Error(`Database not ok ${dbResult}`);
+        }
+        res.send({ ok: true });
+
     }).catch((err) => {
         console.log(err);
         res.status(500).send(err.toString());

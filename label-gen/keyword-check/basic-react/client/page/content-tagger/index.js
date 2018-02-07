@@ -39,6 +39,7 @@ const dom = {
         id: document.getElementById("id"),
         infoSelection: document.getElementById("info-section"),
         infoToggleButton: document.getElementById("info-section-btn"),
+        tagStatusLabel: document.getElementById("tag-status-label"),
         previewTextBox: document.getElementById("text-preview"),
         taggingTextBox: document.getElementById("tag-textarea"),
     },
@@ -96,12 +97,13 @@ const g = {
     document.getElementById("source").textContent = "-";
     dom.dataInfo.previewTextBox.textContent = "-";
     dom.dataInfo.taggingTextBox.value = "-";
-    dom.submitPreview.selectedText.value = "-";
+    dom.submitPreview.selectedText.value = "None";
     dom.submitPreview.selectedSize.value = "-";
 
     dom.loadOptions.contentId.loadButton.elem.addEventListener("click", onLoadByContentId);
     dom.loadOptions.pantipId.loadButton.elem.addEventListener("click", onLoadByPantipId);
     dom.loadOptions.type.first.elem.addEventListener("click", onLoadFirst);
+    dom.loadOptions.type.unlabeled.elem.addEventListener("click", onUnlabeled);
     dom.loadOptions.type.next.elem.addEventListener("click", onLoadByNext);
     dom.loadOptions.type.prev.elem.addEventListener("click", onLoadByPrev);
 
@@ -142,15 +144,21 @@ function onLoadFirst() {
     handleContentPromise($.getJSON(`/api/data/content/`));
 }
 
-function onLoadByNext() {
+function onUnlabeled() {
     if (!g.allowLoading) return;
+    disableLoading();
+    console.log("unlabeled");
+    handleContentPromise($.getJSON(`/api/data/unlabeled-content/`));
+}
+function onLoadByNext() {
+    if (!g.allowLoading || g.contentId === undefined) return;
     disableLoading();
     console.log("next");
     handleContentPromise($.getJSON(`/api/data/next-content/${g.contentId}`));
 }
 
 function onLoadByPrev() {
-    if (!g.allowLoading) return;
+    if (!g.allowLoading || g.contentId === undefined) return;
     disableLoading();
     console.log("prev");
     handleContentPromise($.getJSON(`/api/data/prev-content/${g.contentId}`));
@@ -186,6 +194,19 @@ function handleContentPromise(promise) {
                     }
                 }
             }
+
+            if (g.tags.length > 0) {
+                console.log
+                if (g.tags[0].str === "text-none") {
+                    dom.dataInfo.tagStatusLabel.textContent = 'Labeled, NO tags (0 tags)';
+                } else {
+                    dom.dataInfo.tagStatusLabel.textContent = g.tags.length === 1 ? `Labeled, 1 tag` : `Labeled, ${g.tags.length} tags`;
+                }
+            } else {
+                dom.dataInfo.tagStatusLabel.textContent = 'Unlabeled';
+            }
+            checkShouldSubmitAsNothing();
+
             let previewHtmlStr = "<div>";
             let latestIndex = 0;
             for (const tag of g.tags) {
@@ -215,14 +236,31 @@ function handleContentPromise(promise) {
             alert(err.responseText);
         });
 
-    clearSubmitData();
-};
 
-function clearSubmitData(params) {
-    dom.submitPreview.selectedText.value = "-";
+    dom.submitPreview.selectedText.value = "None";
     dom.submitPreview.selectedSize.value = "-";
     dom.submitPreview.submitButton.classList.add("disabled");
+    g.from = undefined;
+    g.to = undefined;
     g.allowSubmit = false;
+};
+
+function checkShouldSubmitAsNothing(params) {
+    dom.submitPreview.selectedText.value = "None";
+    dom.submitPreview.selectedSize.value = "-";
+    if (g.tags.length === 0) {
+        dom.submitPreview.submitButton.classList.remove("disabled");
+        dom.submitPreview.submitButton.innerText = "Mark as nothing to tag";
+        g.allowSubmit = true;
+    } else if (g.tags.length === 1 && g.tags[0].str === "text-none") {
+        dom.submitPreview.submitButton.classList.add("disabled");
+        dom.submitPreview.submitButton.innerText = "Already marked as nothing to tag";
+        g.allowSubmit = false;
+    } else {
+        dom.submitPreview.submitButton.classList.add("disabled");
+        dom.submitPreview.submitButton.innerText = "Remove all tags to mark as nothing";
+        g.allowSubmit = false;
+    }
 }
 
 function tagStrToObj(str) {
@@ -242,70 +280,10 @@ function overlap(tagObjA, tagObjB) {
     );
 }
 
-// function loadContent() {
-//     if (!g.allowLoading) return;
-
-//     g.contentId = contentIdInput.value;
-//     console.log("start loading", g.contentId);
-//     g.allowLoading = false;
-//     loadButton.classList.add("disabled");
-//     loadButton.textContent = "Loading";
-
-//     $.getJSON(`/api/data/content-pantip-post/${g.contentId}`)
-//         .then((loadedContent) => {
-//             g.content = loadedContent;
-//             console.log("g.content", g.content);
-//             document.getElementById("title").textContent = g.content.info.title;
-//             document.getElementById("time").textContent = g.content.info.time;
-//             document.getElementById("source").textContent = g.content.info.source;
-//             postTextareaElem.value = g.content.text;
-
-//             if (g.content.tag === undefined) {
-//                 g.content.tag = {};
-//             }
-
-//             g.tags = Object.keys(g.content.tag).map(tagStrToObj);
-//             g.tags.sort((a, b) => a.from - b.from);
-//             console.log("gtags", g.tags);
-//             for (const tagA of g.tags) {
-//                 // console.log("tagA", tagA);
-//                 for (const tagB of g.tags) {
-//                     // console.log("tagB", tagB, tagA !== tagB);
-//                     if (tagA !== tagB && overlap(tagA, tagB)) {
-//                         throw Error("Overlaping Tags");
-//                     }
-//                 }
-//             }
-//             let previewHtmlStr = "<div>";
-//             let latestIndex = 0;
-//             for (const tag of g.tags) {
-//                 previewHtmlStr += g.content.text.slice(latestIndex, tag.from);
-//                 previewHtmlStr += "<span class=\"badge badge-primary\">"
-//                 previewHtmlStr += g.content.text.slice(tag.from, tag.to);
-//                 previewHtmlStr += "</span>"
-//                 latestIndex = tag.to;
-//             }
-//             previewHtmlStr += g.content.text.slice(latestIndex) + "</div>";
-//             postPreviewElem.innerHTML = previewHtmlStr;
-
-//             g.allowLoading = true;
-//             loadButton.classList.remove("disabled");
-//             loadButton.textContent = "Done";
-//         })
-//         .catch((err) => {
-//             loadButton.textContent = "Error";
-//             console.log("Loading Error", err);
-//             alert(err.responseText);
-//         });
-
-//     clearSubmitData();
-// }
-
-// loadButton.addEventListener("click", loadContent);
-
 function onTagSelectionChange(event) {
     const tagTextBox = dom.dataInfo.taggingTextBox
     if (tagTextBox.selectionStart === tagTextBox.selectionEnd) {
+        checkShouldSubmitAsNothing();
         return;
     }
     console.log("Selection Change", event);
@@ -326,7 +304,7 @@ function onTagSelectionChange(event) {
         }
     }
 
-    dom.submitPreview.submitButton.innerText = "Submit";
+    dom.submitPreview.submitButton.innerText = "Submit Tag";
     dom.submitPreview.submitButton.classList.remove("disabled");
     g.allowSubmit = true;
 
@@ -343,9 +321,15 @@ function submitData() {
     console.log("click submit");
     const path = `/api/data/mark-content/${g.contentId}`;
     const type = "text";
+
+    let tag
+    if (g.from !== undefined && g.to !== undefined) {
+        tag = `${type}-${g.from}-${g.to}`;
+    } else {
+        tag = `${type}-none`;
+    }
     const payload = {
-        tag: `${type}-${g.from}-${g.to}`,
-        verify: g.selectedText,
+        tag, verify: g.selectedText,
     };
     console.log("sending to", path, "payload", payload);
 

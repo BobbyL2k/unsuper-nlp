@@ -27,11 +27,18 @@ export type ContentSchema = {
     info: {
         [key: string]: string | number,
     },
-    tag?: { [key: string]: boolean }
+    tag?: { [key: string]: boolean },
+};
+
+export type UserSchema = {
+    id: string,
+    password: string,
+    lastEntryIndex?: number,
 };
 
 export type ContentCollection = Collection<ContentSchema>;
 export type ProjectCollection = Collection<ProjectSchema>;
+export type UserCollection = Collection<UserSchema>;
 
 // Connection URL
 const url = "mongodb://localhost:27017";
@@ -43,7 +50,7 @@ let client: MongoClient;
 
 // Use connect method to connect to the server
 export async function connectDb(
-    func: (contents: ContentCollection, projects: ProjectCollection) => Promise<void>,
+    func: (contents: ContentCollection, projects: ProjectCollection, users: UserCollection) => Promise<void>,
 ) {
     if (client === undefined) {
         client = await MongoClient.connect(url);
@@ -53,9 +60,10 @@ export async function connectDb(
     const db = client.db(dbName);
     const contents = db.collection<ContentSchema>("contents");
     const projects = db.collection<ProjectSchema>("projects");
+    const users = db.collection<UserSchema>("users");
 
     try {
-        await func(contents, projects);
+        await func(contents, projects, users);
     } catch (err) {
         // client.close();
         throw err;

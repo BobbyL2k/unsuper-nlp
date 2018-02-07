@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <title>Social Listening Labeler Mock Page</title>
+    <title>Social Listening Content Tagger</title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
@@ -24,7 +24,19 @@
                 <div class="collapse navbar-collapse" id="navbarToggler">
                     <a class="navbar-brand" href="/app">Social Listening</a>
                     <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
-                        Content Creater
+                        <li class="nav-item active">
+                            <div class="nav-link">
+                                <b>
+                                    Content Tagger
+                                </b>
+                                <span class="sr-only">(current)</span>
+                            </div>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/page/content-creator/">
+                                Content Creater
+                            </a>
+                        </li>
                     </ul>
                     <div class="my-2 my-lg-0">
                         <a id="user-logout-btn" class="btn btn-outline-success my-2 my-sm-0" href="/logout">...</a>
@@ -39,20 +51,20 @@
                         <div class="col-4">
                             <h2>Submission Info</h2>
                             <div class="form-group">
-                                <label for="selected-text" class="col-sm-2 col-form-label">Selection</label>
+                                <label for="selected-text" class="col-sm-2 col-form-label">Selection:</label>
                                 <div class="col-sm-10">
                                     <input type="text" readonly class="form-control-plaintext" id="selected-text" value="">
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label for="selected-size" class="col-sm-2 col-form-label">Size</label>
+                                <label for="selected-size" class="col-sm-2 col-form-label">Size:</label>
                                 <div class="col-sm-10">
                                     <input type="text" readonly class="form-control-plaintext" id="selected-size" value="0">
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-md">
-                                    <div id="submit-btn" class="btn btn-block btn-success disabled">Submit</div>
+                                    <div id="submit-btn" class="btn btn-block btn-success disabled">Content not loaded</div>
                                 </div>
                             </div>
                         </div>
@@ -96,13 +108,13 @@
                                     <button id="load-first-btn" type="button" class="btn btn-primary">First Entry</button>
                                 </div>
                                 <div class="col-sm-3">
-                                    <button id="load-unlabled-btn" type="button" class="btn btn-secondary disabled">Unlabeled</button>
+                                    <button id="load-unlabled-btn" type="button" class="btn btn-primary">Unlabeled</button>
                                 </div>
                                 <div class="col-sm-3">
-                                    <button id="load-prev-btn" type="button" class="btn btn-secondary disabled">Prev Entry</button>
+                                    <button id="load-prev-btn" type="button" class="btn btn-primary disabled">Prev Entry</button>
                                 </div>
                                 <div class="col-sm-3">
-                                    <button id="load-next-btn" type="button" class="btn btn-secondary disabled">Next Entry</button>
+                                    <button id="load-next-btn" type="button" class="btn btn-primary disabled">Next Entry</button>
                                 </div>
                             </div>
                         </div>
@@ -136,16 +148,28 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label>Current Tagging</label>
+                            <div class="row">
+                                <div class="col-6">
+                                    <label>Current Tagging Status: </label>
+                                </div>
+                                <div class="col-6">
+                                    <b>
+                                        <label id="tag-status-label"></label>
+                                    </b>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Text Selection</label>
+                            <textarea readonly class="form-control" id="tag-textarea" rows="3">Empty</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Current Tagging Preview</label>
                             <div class="form-control" id="text-preview">
                                 Sample
                                 <span class="badge badge-primary">Sample</span>
                                 Sample
                             </div>
-                        </div>
-                        <div class="form-group">
-                            <label></label>Text Selection</label>
-                            <textarea readonly class="form-control" id="tag-textarea" rows="3">Empty</textarea>
                         </div>
                         <!-- <h2>Projects</h2>
                         <div class="form-group row">
