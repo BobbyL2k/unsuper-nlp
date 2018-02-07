@@ -61,6 +61,7 @@ function onClickSubmit() {
             console.log("result after submit", result);
             if (result.ok === true) {
                 console.log("create OK");
+                window.location.href = `/page/content-tagger/?id=${result.id}`
             }
             // loadContentWithId(g.content.id);
         })

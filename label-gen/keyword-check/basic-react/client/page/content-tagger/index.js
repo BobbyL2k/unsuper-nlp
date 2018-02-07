@@ -110,6 +110,33 @@ const g = {
     dom.dataInfo.taggingTextBox.addEventListener("mouseup", onTagSelectionChange);
 
     dom.submitPreview.submitButton.addEventListener("click", submitData);
+
+    // Code from stackoverflow
+    // https://stackoverflow.com/questions/5448545/how-to-retrieve-get-parameters-from-javascript
+    function getSearchParameters() {
+        var prmstr = window.location.search.substr(1);
+        return prmstr != null && prmstr != "" ? transformToAssocArray(prmstr) : {};
+    }
+
+    function transformToAssocArray(prmstr) {
+        var params = {};
+        var prmarr = prmstr.split("&");
+        for (var i = 0; i < prmarr.length; i++) {
+            var tmparr = prmarr[i].split("=");
+            params[tmparr[0]] = tmparr[1];
+        }
+        return params;
+    }
+
+    const params = getSearchParameters();
+    // End Code from stackoverflow
+
+    if (params.id !== undefined) {
+        disableLoading();
+        loadContentWithId(params.id);
+    }
+
+    console.log("params", params);
 })();
 
 function disableLoading() {
@@ -174,7 +201,11 @@ function handleContentPromise(promise) {
             dom.dataInfo.id.textContent = g.contentId;
             document.getElementById("title").textContent = g.content.info.title;
             document.getElementById("time").textContent = g.content.info.time;
-            document.getElementById("source").textContent = g.content.info.source;
+            if (g.content.info.source !== undefined) {
+                document.getElementById("source").textContent = g.content.info.source;
+            } else {
+                document.getElementById("source").textContent = g.content.info.url
+            }
             dom.dataInfo.taggingTextBox.value = g.content.text;
             dom.dataInfo.taggingTextBox.style.height = dom.dataInfo.taggingTextBox.scrollHeight + 'px';
 

@@ -460,7 +460,7 @@ router.post("/data/create-content/", (req, res) => {
         if (dbResult.result.ok !== 1) {
             throw Error(`Database not ok ${dbResult}`);
         }
-        res.send({ ok: true });
+        res.send({ ok: true, id });
 
     }).catch((err) => {
         console.log(err);
