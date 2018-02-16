@@ -468,4 +468,42 @@ router.post("/data/create-content/", (req, res) => {
     });
 });
 
+// Other
+
+router.get("/status/", (req, res) => {
+
+    console.log(req.body);
+
+    connectDb(async (contents, projects, users) => {
+        if (req.session === undefined || req.session.user === undefined) {
+            throw Error(`Session Error ${JSON.stringify(req.session)}`);
+        }
+
+        const total = await contents.find().count();
+        const labeled = await contents.find({ $and: [{ tag: { $gt: {} } }] }).count();
+        const containsNE = await contents.find({ $and: [{ tag: { $lt: { "text-none": false } } }, { tag: { $gt: {} } }] }, { id: 1 }).count();
+
+        const result = {
+            overall: {
+                total,
+                labeled,
+                unlabeled: total - labeled,
+                percentage: Math.round(labeled / total * 10000) / 100,
+            },
+            labeled: {
+                total: labeled,
+                containsNE,
+                empty: labeled - containsNE,
+                percentage: Math.round(containsNE / labeled * 10000) / 100,
+            },
+        };
+
+        res.send(result);
+
+    }).catch((err) => {
+        console.log(err);
+        res.status(500).send(err.toString());
+    });
+});
+
 export default router;
