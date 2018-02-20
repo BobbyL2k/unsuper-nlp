@@ -280,22 +280,24 @@ router.get("/data/prev-content/*?", (req, res) => {
     });
 });
 
-router.post("/data/mark-content/:topicId/:contentType", (req, res) => {
-    if (req.session === undefined || req.session.user === undefined) {
-        return res.send({
-            success: false,
-            message: "session error",
-        });
-    }
+router.post("/data/mark-content/*?", (req, res) => {
 
     console.log(req.body);
 
     connectDb(async (contents, projects) => {
-        const content = await contents.findOne({
-            id: `${req.params.topicId}/${req.params.contentType}`,
-        });
+
+        if (req.session === undefined || req.session.user === undefined) {
+            res.send({
+                success: false,
+                message: "session error",
+            });
+            return;
+        }
+
+        const id = req.params[0].toString();
+        const content = await contents.findOne({ id });
         if (content === null) {
-            throw Error(`content not found with id ${req.params.topicId}/${req.params.contentType}`);
+            throw Error(`content not found with id ${id}`);
         }
         if (content.tag === undefined) {
             content.tag = {};
@@ -329,9 +331,7 @@ router.post("/data/mark-content/:topicId/:contentType", (req, res) => {
         const $set: any = {};
         const $unset: any = {};
         let option;
-        const topicId = req.params.topicId.toString();
-        const contentType = req.params.contentType.toString();
-        const contentId = `${topicId}/${contentType}`;
+        const contentId = req.params[0].toString();
         console.log("contentId", contentId);
         if (from !== "none") {
             const serverGot = content.text.slice(from, to);
@@ -484,7 +484,7 @@ router.get("/status/", (req, res) => {
         const containsNE = await contents.find(
             {
                 $and: [{ tag: { $lt: { "text-none": false } } },
-                { tag: { $gt: {} } }]
+                { tag: { $gt: {} } }],
             }).count();
 
         const result = {
