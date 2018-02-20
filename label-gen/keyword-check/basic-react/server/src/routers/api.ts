@@ -243,6 +243,7 @@ router.get("/data/unlabeled-content/*?", (req, res) => {
             .limit(Object.keys(userReserved).length + 1)
             .toArray());
 
+        let content: ContentSchema | null = null;
         for (const contentEntry of loadedContents) {
             let isReserved = false;
             for (const user of Object.keys(userReserved)) {
@@ -253,12 +254,16 @@ router.get("/data/unlabeled-content/*?", (req, res) => {
             }
             if (isReserved === false) {
                 userReserved[req.session.user] = contentEntry.id;
-                res.send(contentEntry);
+                content = contentEntry;
                 break;
             }
         }
+        if (content !== null) {
+            res.send(content);
+        } else {
+            throw Error("No unlabeled content is found");
+        }
 
-        throw Error("No unlabeled content is found");
     }).catch((err) => {
         console.log(err);
         res.status(500).send(err.toString());
@@ -504,8 +509,8 @@ router.get("/status/", (req, res) => {
             {
                 $and: [
                     { "tag.text-none": { $exists: false } },
-                    { tag: { $gt: {} } }
-                ]
+                    { tag: { $gt: {} } },
+                ],
             }).count();
 
         const result = {
