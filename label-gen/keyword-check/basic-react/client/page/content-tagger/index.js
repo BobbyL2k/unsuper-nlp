@@ -400,3 +400,10 @@ function requestRemoveData(tagId) {
             document.alert(`Error removing tag ${err}`);
         });;
 }
+
+window.addEventListener("keypress", (e) => {
+    if (e.key === "u") { onUnlabeled(); }
+    if (e.key === "p" || e.key === "ArrowLeft") { onLoadByPrev(); }
+    if (e.key === "n" || e.key === "ArrowRight") { onLoadByNext(); }
+    if (e.key === "Enter") { submitData(); }
+})
