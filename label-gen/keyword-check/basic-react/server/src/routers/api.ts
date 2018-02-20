@@ -1,7 +1,7 @@
-import * as cheerio from "cheerio";
+// import * as cheerio from "cheerio";
 import * as express from "express";
 import { connectDb, ContentSchema, ProjectSchema } from "../nlp-db";
-import * as pantip from "../tools/pantip";
+// import * as pantip from "../tools/pantip";
 
 export type ProjectIndex = Array<{
     A_ID: string,
@@ -483,8 +483,10 @@ router.get("/status/", (req, res) => {
         const labeled = await contents.find({ $and: [{ tag: { $gt: {} } }] }).count();
         const containsNE = await contents.find(
             {
-                $and: [{ tag: { $lt: { "text-none": false } } },
-                { tag: { $gt: {} } }],
+                $and: [
+                    { "tag.text-none": { $exists: false } },
+                    { tag: { $gt: {} } }
+                ]
             }).count();
 
         const result = {

@@ -1,4 +1,4 @@
-import { connectDb, ProjectSchema } from "../nlp-db";
+import { connectDb } from "../nlp-db";
 
 connectDb(async (contents, projects) => {
     console.log("run");
