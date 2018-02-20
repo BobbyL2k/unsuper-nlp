@@ -229,17 +229,36 @@ router.get("/data/content/*?", (req, res) => {
     });
 });
 
+const userReserved: { [userId: string]: string } = {};
 router.get("/data/unlabeled-content/*?", (req, res) => {
     connectDb(async (contents, projects) => {
-        const content = (await contents
+
+        if (req.session === undefined || req.session.user === undefined) {
+            throw Error("session error");
+        }
+
+        const loadedContents = (await contents
             .find({ tag: { $not: { $gt: {} } } })
             .sort({ id: -1 })
-            .limit(1)
-            .toArray())[0];
-        if (content === null) {
-            throw Error(`No unlabeled content is found`);
+            .limit(Object.keys(userReserved).length + 1)
+            .toArray());
+
+        for (const contentEntry of loadedContents) {
+            let isReserved = false;
+            for (const user of Object.keys(userReserved)) {
+                if (user !== req.session.user && userReserved[user] === contentEntry.id) {
+                    isReserved = true;
+                    break;
+                }
+            }
+            if (isReserved === false) {
+                userReserved[req.session.user] = contentEntry.id;
+                res.send(contentEntry);
+                break;
+            }
         }
-        res.send(content);
+
+        throw Error("No unlabeled content is found");
     }).catch((err) => {
         console.log(err);
         res.status(500).send(err.toString());
