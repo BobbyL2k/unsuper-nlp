@@ -27,7 +27,9 @@ export type ContentSchema = {
     info: {
         [key: string]: string | number,
     },
-    tag?: { [key: string]: boolean },
+    tag?: {
+        [key: string]: boolean | { user: string },
+    },
 };
 
 export type UserSchema = {

@@ -347,12 +347,12 @@ router.post("/data/mark-content/:topicId/:contentType", (req, res) => {
                 }
             }
 
-            $set[`tag.${type}-${from}-${to}`] = true;
+            $set[`tag.${type}-${from}-${to}`] = { user: req.session.user };
             $unset["tag.text-none"] = true;
             option = { $set, $unset };
         } else {
             if (tags.length === 0 || (tags.length === 1 && tags[0] === "text-none")) {
-                $set["tag.text-none"] = true;
+                $set["tag.text-none"] = { user: req.session.user };
                 option = { $set };
             } else {
                 throw Error("No Tag can't be used on contents already with a tag " + JSON.stringify(tags));
@@ -479,9 +479,13 @@ router.get("/status/", (req, res) => {
             throw Error(`Session Error ${JSON.stringify(req.session)}`);
         }
 
-        const total = await contents.find().count();
+        const total = await contents.find({}).count();
         const labeled = await contents.find({ $and: [{ tag: { $gt: {} } }] }).count();
-        const containsNE = await contents.find({ $and: [{ tag: { $lt: { "text-none": false } } }, { tag: { $gt: {} } }] }, { id: 1 }).count();
+        const containsNE = await contents.find(
+            {
+                $and: [{ tag: { $lt: { "text-none": false } } },
+                { tag: { $gt: {} } }]
+            }).count();
 
         const result = {
             overall: {

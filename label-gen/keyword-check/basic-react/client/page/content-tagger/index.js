@@ -162,7 +162,7 @@ function onLoadByPantipId() {
     if (!g.allowLoading) return;
     disableLoading();
     console.log("pantip");
-    handleContentPromise($.getJSON(`/api/data/content/${dom.loadOptions.pantipId.input.value}/post`));
+    handleContentPromise($.getJSON(`/api/data/content/pantip/${dom.loadOptions.pantipId.input.value}/post`));
 }
 
 function onLoadFirst() {
