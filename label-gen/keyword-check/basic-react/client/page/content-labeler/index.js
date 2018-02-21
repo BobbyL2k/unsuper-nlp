@@ -222,7 +222,16 @@ function handleContentPromise(promise) {
                     }
                     return { from: parseInt(from), to: parseInt(to), str };
                 }
-    
+
+                function overlap(tagObjA, tagObjB) {
+                    return (
+                        tagObjA.from <= tagObjB.from && tagObjB.from < tagObjA.to ||
+                        tagObjA.from < tagObjB.to && tagObjB.to <= tagObjA.to ||
+                        tagObjB.from <= tagObjA.from && tagObjA.from < tagObjB.to ||
+                        tagObjB.from < tagObjA.to && tagObjA.to <= tagObjB.to
+                    );
+                }
+                
                 g.tags = Object.keys(g.content.tag).map(tagStrToObj);
                 g.tags.sort((a, b) => a.from - b.from);
                 console.log("gtags", g.tags);
