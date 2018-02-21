@@ -1,0 +1,22 @@
+.fix {
+    top: 3.5em;
+    left: 0;
+    position: fixed;
+    width: 100%;
+}
+
+.click-through {
+    pointer-events: none;
+}
+
+.table-page-select-bottom-bar {
+    text-align: center;
+}
+
+#post-textarea {
+    height: 50vh;
+}
+
+#label-section button{
+    width: 100%;
+}

@@ -1,6 +1,6 @@
 // import * as cheerio from "cheerio";
 import * as express from "express";
-import { connectDb, ContentSchema, ProjectSchema } from "../nlp-db";
+import { connectDb, ContentSchema, ProjectSchema, DomainValue } from "../nlp-db";
 // import * as pantip from "../tools/pantip";
 
 export type ProjectIndex = Array<{
@@ -229,8 +229,13 @@ router.get("/data/content/*?", (req, res) => {
     });
 });
 
-const userReserved: { [userId: string]: string } = {};
-router.get("/data/unlabeled-content/*?", (req, res) => {
+const userReserved: {
+    tag: { [userId: string]: string },
+    label: { [userId: string]: string }
+} = {
+    tag: {}, label: {}
+};
+router.get("/data/untagged-content/*?", (req, res) => {
     connectDb(async (contents, projects) => {
 
         if (req.session === undefined || req.session.user === undefined) {
@@ -240,20 +245,64 @@ router.get("/data/unlabeled-content/*?", (req, res) => {
         const loadedContents = (await contents
             .find({ tag: { $not: { $gt: {} } } })
             .sort({ id: -1 })
-            .limit(Object.keys(userReserved).length + 1)
+            .limit(Object.keys(userReserved.tag).length + 1)
             .toArray());
 
         let content: ContentSchema | null = null;
         for (const contentEntry of loadedContents) {
             let isReserved = false;
-            for (const user of Object.keys(userReserved)) {
-                if (user !== req.session.user && userReserved[user] === contentEntry.id) {
+            for (const user of Object.keys(userReserved.tag)) {
+                if (user !== req.session.user && userReserved.tag[user] === contentEntry.id) {
                     isReserved = true;
                     break;
                 }
             }
             if (isReserved === false) {
-                userReserved[req.session.user] = contentEntry.id;
+                userReserved.tag[req.session.user] = contentEntry.id;
+                content = contentEntry;
+                break;
+            }
+        }
+        if (content !== null) {
+            res.send(content);
+        } else {
+            throw Error("No unlabeled content is found");
+        }
+
+    }).catch((err) => {
+        console.log(err);
+        res.status(500).send(err.toString());
+    });
+});
+
+router.get("/data/unlabeled-content/*?", (req, res) => {
+    connectDb(async (contents, projects) => {
+
+        if (req.session === undefined || req.session.user === undefined) {
+            throw Error("session error");
+        }
+
+        const loadedContents = (await contents
+            .find({ 
+                "tag.text-none": { $exists: false }, 
+                "label.sentiment": { $exists: false },
+                tag: { $gt: {} },
+            })
+            .sort({ id: -1 })
+            .limit(Object.keys(userReserved.label).length + 1)
+            .toArray());
+
+        let content: ContentSchema | null = null;
+        for (const contentEntry of loadedContents) {
+            let isReserved = false;
+            for (const user of Object.keys(userReserved.label)) {
+                if (user !== req.session.user && userReserved.label[user] === contentEntry.id) {
+                    isReserved = true;
+                    break;
+                }
+            }
+            if (isReserved === false) {
+                userReserved.label[req.session.user] = contentEntry.id;
                 content = contentEntry;
                 break;
             }
@@ -428,6 +477,58 @@ router.post("/data/unmark-content/*?", (req, res) => {
             {
                 id: contentId,
             }, { $unset });
+
+        if (dbResult.ok !== 1) {
+            throw Error(`Database not ok ${dbResult}`);
+        }
+        res.send({ ok: true });
+
+    }).catch((err) => {
+        console.log(err);
+        res.status(500).send(err.toString());
+    });
+});
+
+
+router.post("/data/label-content/*?", (req, res) => {
+
+    console.log("/data/label-content/*?", req.body);
+
+    connectDb(async (contents, projects) => {
+
+        if (req.session === undefined || req.session.user === undefined) {
+            res.send({
+                success: false,
+                message: "session error",
+            });
+            return;
+        }
+
+        const id = req.params[0].toString();
+        const content = await contents.findOne({ id });
+        if (content === null) {
+            throw Error(`content not found with id ${id}`);
+        }
+        if (content.label === undefined) {
+            content.label = {};
+        }
+
+        const domain = req.body.domain.toString();
+        const value = req.body.value.toString();
+        if (domain !== DomainValue.sentiment.str) {
+            throw Error(`param domain "${domain}" not supported`);
+        }
+        if (Object.keys(DomainValue.sentiment.value).find((v) => v === value) === undefined) {
+            throw Error(`param value "${value}" not supported`);
+        }
+
+        const $set: any = {};
+        $set[`label.${DomainValue.sentiment.str}`] = { user: req.session.user, value };
+        const option = { $set };
+
+        const dbResult = await contents.findOneAndUpdate({id}, option);
+
+        console.log("dbResult", dbResult);
 
         if (dbResult.ok !== 1) {
             throw Error(`Database not ok ${dbResult}`);

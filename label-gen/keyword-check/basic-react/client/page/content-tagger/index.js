@@ -175,7 +175,7 @@ function onUnlabeled() {
     if (!g.allowLoading) return;
     disableLoading();
     console.log("unlabeled");
-    handleContentPromise($.getJSON(`/api/data/unlabeled-content/`));
+    handleContentPromise($.getJSON(`/api/data/untagged-content/`));
 }
 function onLoadByNext() {
     if (!g.allowLoading || g.contentId === undefined) return;

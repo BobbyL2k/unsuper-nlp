@@ -50,5 +50,11 @@
     "webpack": "^3.8.1"
   },
   "author": "BobbyL2k",
-  "private": true
+  "private": true,
+  "scripts": {
+    "build-server": "tsc -p server",
+    "run-server": "node server/build/index.js",
+    "dev-build-server": "tsc -p server -w",
+    "dev-run-server": "nodemon server/build/index.js"
+  }
 }

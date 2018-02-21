@@ -21,6 +21,44 @@ export type ProjectSchema = {
     },
 };
 
+type HelperForm<T extends string, T2> = {[key in T]: { str:T, value:T2 } }
+
+export type DomainValue = "sentiment";
+
+export type SentimentValue = "positive" | "negative" | "neutral" | "mixed";
+export const SentimentValue: HelperForm<SentimentValue, null> = {
+    positive: {
+        str:"positive",
+        value: null,
+    },
+    negative: {
+        str:"negative",
+        value: null,
+    },
+    neutral: {
+        str:"neutral",
+        value: null,
+    },
+    mixed: {
+        str:"mixed",
+        value: null,
+    },
+}
+
+export type Domain = SentimentValue;
+
+export const DomainValue: HelperForm<DomainValue, HelperForm<SentimentValue, null>> = {
+    sentiment: {
+        str: "sentiment",
+        value: SentimentValue,
+    },
+}
+
+type DomainForm<T> = {
+    user: string,
+    value: T,
+}
+
 export type ContentSchema = {
     id: string,
     text: string,
@@ -29,6 +67,9 @@ export type ContentSchema = {
     },
     tag?: {
         [key: string]: boolean | { user: string },
+    },
+    label?: {
+        sentiment?: DomainForm<SentimentValue>,
     },
 };
 
