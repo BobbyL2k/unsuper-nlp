@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Social Listening Sentiment Tagger</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb"
+        crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+    <div id="app">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggler" aria-controls="navbarToggler"
+                aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarToggler">
+                <a class="navbar-brand" href="/app">Social Listening</a>
+                <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/page/content-tagger/">
+                            Content Tagger
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/page/content-creator/">
+                            Content Creater
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/api/status/" target="_blank">
+                            Current Status
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/page/content-tagger/">
+                            Content Labeler
+                        </a>
+                    </li>
+                    <li class="nav-item active">
+                        <div class="nav-link">
+                            <b>
+                                Sentiment Tagger
+                            </b>
+                            <span class="sr-only">(current)</span>
+                        </div>
+                    </li>
+                </ul>
+                <div class="my-2 my-lg-0">
+                    <a id="user-logout-btn" class="btn btn-outline-success my-2 my-sm-0" href="/logout">...</a>
+                </div>
+            </div>
+        </nav>
+        <div class="fix">
+            <div class="container">
+                <div class="row">
+                    <div class="col-8">
+                    </div>
+                    <div class="col-4">
+                        <h2>Submission Info</h2>
+                        <div class="form-group">
+                            <label for="selected-text" class="col-sm-2 col-form-label">Selection:</label>
+                            <div class="col-sm-10">
+                                <input type="text" readonly class="form-control-plaintext" id="selected-text" value="">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="selected-size" class="col-sm-2 col-form-label">Size:</label>
+                            <div class="col-sm-10">
+                                <input type="text" readonly class="form-control-plaintext" id="selected-size" value="0">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md">
+                                <div id="nothing-btn" class="btn btn-block btn-primary">
+                                    <div class="disabled-content">Content not loaded</div>
+                                    <div class="enabled-content">Mark as Nothing</div>
+                                </div>
+                                <div id="mp-btn" class="btn btn-block btn-success">
+                                    <div class="disabled-content">Content not loaded</div>
+                                    <div class="enabled-content">Mark<u>P</u>ositive</div>
+                                </div>
+                                <div id="up-btn" class="btn btn-block btn-outline-success">
+                                    <div class="disabled-content">Content not loaded</div>
+                                    <div class="enabled-content">Unmark P
+                                        <u>o</u>sitive</div>
+                                </div>
+                                <div id="mn-btn" class="btn btn-block btn-danger">
+                                    <div class="disabled-content">Content not loaded</div>
+                                    <div class="enabled-content">Mark
+                                        <u>N</u>egative</div>
+                                </div>
+                                <div id="un-btn" class="btn btn-block btn-outline-danger">
+                                    <div class="disabled-content">Content not loaded</div>
+                                    <div class="enabled-content">Unmark N<u>e</u>gative</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="container">
+            <div class="row">
+                <div class="col-8">
+                    <h2>Load Data Options</h2>
+                    <div class="form-group row">
+                        <label for="content-id-input" class="col-sm-3 col-form-label">1. ID</label>
+                        <div class="col-sm-9">
+                            <form onsubmit="return false;">
+                                <div class="input-group">
+                                    <input id="content-id-input" type="text" class="form-control" placeholder="Content ID">
+                                    <span class="input-group-btn">
+                                        <button id="load-content-id-btn" class="btn btn-primary" type="submit">Load</button>
+                                    </span>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="pantip-id-input" class="col-sm-3 col-form-label">2. Pantip Topic</label>
+                        <div class="col-sm-9">
+                            <form onsubmit="return false;">
+                                <div class="input-group">
+                                    <input id="pantip-id-input" type="text" class="form-control" placeholder="Pantip Topic ID">
+                                    <span class="input-group-btn">
+                                        <button id="load-pantip-id-btn" class="btn btn-primary" type="submit">Load</button>
+                                    </span>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-sm-3 col-form-label">3. Load by Type</label>
+                        <div class="col-sm-9 row">
+                            <div class="col-sm-3">
+                                <button id="load-first-btn" type="button" class="btn btn-primary">First Entry</button>
+                            </div>
+                            <div class="col-sm-3">
+                                <button id="load-unlabled-btn" type="button" class="btn btn-primary">
+                                    <u>U</u>nlabeled</button>
+                            </div>
+                            <div class="col-sm-3">
+                                <button id="load-prev-btn" type="button" class="btn btn-primary disabled">
+                                    ←
+                                    <u>P</u>rev Entry
+                                </button>
+                            </div>
+                            <div class="col-sm-3">
+                                <button id="load-next-btn" type="button" class="btn btn-primary disabled">
+                                    <u>N</u>ext Entry →
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h2>Data Info</h2>
+                    <div class="form-group row">
+                        <label for="id" class="col-sm-2 col-form-label">Content Id</label>
+                        <div class="col-sm-6">
+                            <div id="id" class="form-control-plaintext"></div>
+                        </div>
+                        <button id="info-section-btn" type="button" class="col-sm-4 btn btn-grey" data-toggle="collapse" data-target="#info-section">Show/Hide Information</button>
+                    </div>
+                    <div id="info-section" class="collapse">
+                        <div class="form-group row">
+                            <label for="title" class="col-sm-2 col-form-label">Title</label>
+                            <div class="col-sm-10">
+                                <div class="form-control-plaintext" id="title" value="">-</div>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="time" class="col-sm-2 col-form-label">Time</label>
+                            <div class="col-sm-10">
+                                <div class="form-control-plaintext" id="time">-</div>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="source" class="col-sm-2 col-form-label">Source</label>
+                            <div class="col-sm-10">
+                                <div class="form-control-plaintext" id="source">-</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-6">
+                                <label>Content Tagging Status: </label>
+                            </div>
+                            <div class="col-6">
+                                <b>
+                                    <label id="content-tag-status-label"></label>
+                                </b>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <label>Sentiment Tagging Status: </label>
+                            </div>
+                            <div class="col-6">
+                                <b>
+                                    <label id="sentiment-tag-status-label"></label>
+                                </b>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="textbox" class="form-control"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb"
+        crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn"
+        crossorigin="anonymous"></script>
+    <script src="index.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,37 @@
+/* Sidebar */
+.fix {
+    top: 3.5em;
+    left: 0;
+    position: fixed;
+    width: 100%;
+}
+
+/* Buttons */
+.btn .enabled-content {
+    display: block;
+}
+.btn.disabled .enabled-content {
+    display: none;
+}
+.btn .disabled-content {
+    display: none;
+}
+.btn.disabled .disabled-content {
+    display: block;
+}
+
+/* Textbox */
+.pos {
+    background-color: rgb(40, 167, 69);;
+    color: #FFFFFF;
+}
+
+.neg {
+    background-color: rgb(220, 53, 69);
+    color: #FFFFFF;
+}
+
+.neg.pos {
+    background-color: rgb(253, 171, 64);
+    color: #000000;
+}
