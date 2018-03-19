@@ -1,6 +1,7 @@
 // import * as cheerio from "cheerio";
 import * as express from "express";
 import { connectDb, ContentSchema, ProjectSchema, DomainValue } from "../nlp-db";
+import * as apiTags from "./api/tags";
 // import * as pantip from "../tools/pantip";
 
 export type ProjectIndex = Array<{
@@ -275,50 +276,6 @@ router.get("/data/untagged-content/*?", (req, res) => {
     });
 });
 
-router.get("/data/unlabeled-content/*?", (req, res) => {
-    connectDb(async (contents, projects) => {
-
-        if (req.session === undefined || req.session.user === undefined) {
-            throw Error("session error");
-        }
-
-        const loadedContents = (await contents
-            .find({ 
-                "tag.text-none": { $exists: false }, 
-                "label.sentiment": { $exists: false },
-                tag: { $gt: {} },
-            })
-            .sort({ id: -1 })
-            .limit(Object.keys(userReserved.label).length + 1)
-            .toArray());
-
-        let content: ContentSchema | null = null;
-        for (const contentEntry of loadedContents) {
-            let isReserved = false;
-            for (const user of Object.keys(userReserved.label)) {
-                if (user !== req.session.user && userReserved.label[user] === contentEntry.id) {
-                    isReserved = true;
-                    break;
-                }
-            }
-            if (isReserved === false) {
-                userReserved.label[req.session.user] = contentEntry.id;
-                content = contentEntry;
-                break;
-            }
-        }
-        if (content !== null) {
-            res.send(content);
-        } else {
-            throw Error("No unlabeled content is found");
-        }
-
-    }).catch((err) => {
-        console.log(err);
-        res.status(500).send(err.toString());
-    });
-});
-
 router.get("/data/next-content/*?", (req, res) => {
     connectDb(async (contents, projects) => {
         const contentId = req.params[0].toString();
@@ -489,6 +446,51 @@ router.post("/data/unmark-content/*?", (req, res) => {
     });
 });
 
+// Content Labeler
+
+router.get("/data/unlabeled-content/*?", (req, res) => {
+    connectDb(async (contents, projects) => {
+
+        if (req.session === undefined || req.session.user === undefined) {
+            throw Error("session error");
+        }
+
+        const loadedContents = (await contents
+            .find({
+                "tag": { $gt: {} },
+                "tag.text-none": { $exists: false }, 
+                "label.sentiment": { $exists: false },
+            })
+            .sort({ id: -1 })
+            .limit(Object.keys(userReserved.label).length + 1)
+            .toArray());
+
+        let content: ContentSchema | null = null;
+        for (const contentEntry of loadedContents) {
+            let isReserved = false;
+            for (const user of Object.keys(userReserved.label)) {
+                if (user !== req.session.user && userReserved.label[user] === contentEntry.id) {
+                    isReserved = true;
+                    break;
+                }
+            }
+            if (isReserved === false) {
+                userReserved.label[req.session.user] = contentEntry.id;
+                content = contentEntry;
+                break;
+            }
+        }
+        if (content !== null) {
+            res.send(content);
+        } else {
+            throw Error("No unlabeled content is found");
+        }
+
+    }).catch((err) => {
+        console.log(err);
+        res.status(500).send(err.toString());
+    });
+});
 
 router.post("/data/label-content/*?", (req, res) => {
 
@@ -636,5 +638,9 @@ router.get("/status/", (req, res) => {
         res.status(500).send(err.toString());
     });
 });
+
+// Sentiment
+
+router.use("/tags", apiTags.createRouter(connectDb));
 
 export default router;

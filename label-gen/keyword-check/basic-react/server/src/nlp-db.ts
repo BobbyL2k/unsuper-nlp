@@ -71,6 +71,9 @@ export type ContentSchema = {
     label?: {
         sentiment?: DomainForm<SentimentValue>,
     },
+    tags?: {
+        [key: string]: { start: number, end: number }[],
+    },
 };
 
 export type UserSchema = {
@@ -113,3 +116,5 @@ export async function connectDb(
     }
     // client.close();
 }
+
+export type connectDbType = typeof connectDb;

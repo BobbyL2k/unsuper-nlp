@@ -39,8 +39,8 @@ const dom = {
         id: document.getElementById("id"),
         infoSelection: document.getElementById("info-section"),
         infoToggleButton: document.getElementById("info-section-btn"),
-        contentTagStatusLabel: document.getElementById("content-tag-status-label"),
-        sentimentTagStatusLabel: document.getElementById("sentiment-tag-status-label"),
+        contentTagStatus: document.getElementById("content-tag-status-label"),
+        sentimentTagStatus: document.getElementById("sentiment-tag-status-label"),
         previewTextBox: document.getElementById("text-preview"),
     },
     textbox: document.getElementById("textbox"),
@@ -50,8 +50,14 @@ const dom = {
         nBtn: document.getElementById("nothing-btn"),
         mpBtn: document.getElementById("mp-btn"),
         upBtn: document.getElementById("up-btn"),
+        mpnBtn: document.getElementById("mpn-btn"),
+        upnBtn: document.getElementById("upn-btn"),
         mnBtn: document.getElementById("mn-btn"),
         unBtn: document.getElementById("un-btn"),
+        mfBtn: document.getElementById("mf-btn"),
+        ufBtn: document.getElementById("uf-btn"),
+        mqBtn: document.getElementById("mq-btn"),
+        uqBtn: document.getElementById("uq-btn"),
     }
 }
 const domType = {
@@ -69,14 +75,38 @@ const g = {
     selectedText: null,
     newEntry: null,
     allowLoading: true,
-    data:{
+    data: {
         string: null,
-        posEntries: [],
-        negEntries: []
+        entries: null,
     }
 }
 
-function renderTextbox() {
+function renderSentmentPreview() {
+
+    console.log("g.data.entries", g.data.entries);
+    const entryTypes = Object.keys(g.data.entries);
+    const entryTypeName = {
+        pos: "Positive",
+        neg: "Negative",
+        feedback: "Feedback",
+        question: "Question",
+    }
+    if (entryTypes.length > 0) {
+        if (entryTypes[0] === "none") {
+            dom.dataInfo.sentimentTagStatus.textContent = 'Labeled, NO tags (0 tags)';
+        } else {
+            const total = 0;
+            let textContent = "Labeled";
+            for(const entryType of entryTypes){
+                textContent += `, ${g.data.entries[entryType].length} ${entryTypeName[entryType]} `;
+                textContent += g.data.entries[entryType].length > 1 ? "tags" : "tag";
+            }
+            dom.dataInfo.sentimentTagStatus.textContent = textContent;
+        }
+    } else {
+        dom.dataInfo.sentimentTagStatus.textContent = 'Unlabeled';
+    }
+
     // Clear old children
     while (dom.textbox.firstChild) {
         dom.textbox.removeChild(dom.textbox.firstChild);
@@ -84,17 +114,18 @@ function renderTextbox() {
 
     const separators = [];
     separators.push(g.data.string.length);
-    for (const entry of g.data.posEntries) {
-        console.assert(entry.start < g.data.string.length);
-        console.assert(entry.end <= g.data.string.length);
-        separators.push(entry.start);
-        separators.push(entry.end);
-    }
-    for (const entry of g.data.negEntries) {
-        console.assert(entry.start < g.data.string.length);
-        console.assert(entry.end <= g.data.string.length);
-        separators.push(entry.start);
-        separators.push(entry.end);
+    
+    for (const entryType of Object.keys(g.data.entries)) {
+        if(entryType === "none"){
+            continue;
+        }
+        const entries = g.data.entries[entryType];
+        for (const entry of entries) {
+            console.assert(entry.start < g.data.string.length);
+            console.assert(entry.end <= g.data.string.length);
+            separators.push(entry.start);
+            separators.push(entry.end);
+        }
     }
     separators.sort((a, b) => a - b);
     console.log(separators);
@@ -113,11 +144,14 @@ function renderTextbox() {
             continue;
         }
         const elem = document.createElement("span");
-        if (inEntries(lastIndex, separator, g.data.posEntries)) {
-            elem.classList.add("pos");
+        for (const entryType of Object.keys(g.data.entries)) {
+            if(entryType === "none") {
+                continue;
+            }
+            const entry = g.data.entries[entryType];
+            if (inEntries(lastIndex, separator, g.data.entries[entryType])) {
+                elem.classList.add(entryType);
         }
-        if (inEntries(lastIndex, separator, g.data.negEntries)) {
-            elem.classList.add("neg");
         }
         elem.dataset.offset = lastIndex;
         elem.innerText = g.data.string.slice(lastIndex, separator);
@@ -136,17 +170,28 @@ function renderSubmissionPreview() {
             dom.submitPreview.nBtn.classList.remove("disabled");
             dom.submitPreview.mpBtn.classList.remove("disabled");
             dom.submitPreview.upBtn.classList.remove("disabled");
+            dom.submitPreview.mpnBtn.classList.remove("disabled");
+            dom.submitPreview.upnBtn.classList.remove("disabled");
             dom.submitPreview.mnBtn.classList.remove("disabled");
             dom.submitPreview.unBtn.classList.remove("disabled");
+            dom.submitPreview.mfBtn.classList.remove("disabled");
+            dom.submitPreview.ufBtn.classList.remove("disabled");
+            dom.submitPreview.mqBtn.classList.remove("disabled");
+            dom.submitPreview.uqBtn.classList.remove("disabled");
 
         } else {
             dom.submitPreview.selectedText.value = "No text selected";
             dom.submitPreview.selectedSize.value = "No text selected";
 
-            if (g.data.posEntries.length !== 0 && g.data.negEntries.length !== 0) {
+            const entryTypes = Object.keys(g.data.entries);
+            if (entryTypes.length === 1 && entryTypes[0] === "none"){
+                dom.submitPreview.nBtn.children[1].innerText = "Unmark as Nothing-to-Tag";
+                dom.submitPreview.nBtn.classList.remove("disabled");
+            }
+            if (entryTypes.length !== 0) { // There exist some entires
                 dom.submitPreview.nBtn.children[0].innerText = "Remove all tags to mark as nothing";
                 dom.submitPreview.nBtn.classList.add("disabled");
-            }else{
+            } else {
                 dom.submitPreview.nBtn.children[1].innerText = "Mark as Nothing-to-Tag";
                 dom.submitPreview.nBtn.classList.remove("disabled");
             }
@@ -154,10 +199,22 @@ function renderSubmissionPreview() {
             dom.submitPreview.mpBtn.classList.add("disabled");
             dom.submitPreview.upBtn.children[0].innerText = "No text selected";
             dom.submitPreview.upBtn.classList.add("disabled");
+            dom.submitPreview.mpnBtn.children[0].innerText = "No text selected";
+            dom.submitPreview.mpnBtn.classList.add("disabled");
+            dom.submitPreview.upnBtn.children[0].innerText = "No text selected";
+            dom.submitPreview.upnBtn.classList.add("disabled");
             dom.submitPreview.mnBtn.children[0].innerText = "No text selected";
             dom.submitPreview.mnBtn.classList.add("disabled");
             dom.submitPreview.unBtn.children[0].innerText = "No text selected";
             dom.submitPreview.unBtn.classList.add("disabled");
+            dom.submitPreview.mfBtn.children[0].innerText = "No text selected";
+            dom.submitPreview.mfBtn.classList.add("disabled");
+            dom.submitPreview.ufBtn.children[0].innerText = "No text selected";
+            dom.submitPreview.ufBtn.classList.add("disabled");
+            dom.submitPreview.mqBtn.children[0].innerText = "No text selected";
+            dom.submitPreview.mqBtn.classList.add("disabled");
+            dom.submitPreview.uqBtn.children[0].innerText = "No text selected";
+            dom.submitPreview.uqBtn.classList.add("disabled");
         }
     } else {
         dom.submitPreview.selectedText.value = "No text loaded";
@@ -169,10 +226,22 @@ function renderSubmissionPreview() {
         dom.submitPreview.mpBtn.classList.add("disabled");
         dom.submitPreview.upBtn.children[0].innerText = "No text loaded";
         dom.submitPreview.upBtn.classList.add("disabled");
+        dom.submitPreview.mpnBtn.children[0].innerText = "No text loaded";
+        dom.submitPreview.mpnBtn.classList.add("disabled");
+        dom.submitPreview.upnBtn.children[0].innerText = "No text loaded";
+        dom.submitPreview.upnBtn.classList.add("disabled");
         dom.submitPreview.mnBtn.children[0].innerText = "No text loaded";
         dom.submitPreview.mnBtn.classList.add("disabled");
         dom.submitPreview.unBtn.children[0].innerText = "No text loaded";
         dom.submitPreview.unBtn.classList.add("disabled");
+        dom.submitPreview.mfBtn.children[0].innerText = "No text loaded";
+        dom.submitPreview.mfBtn.classList.add("disabled");
+        dom.submitPreview.ufBtn.children[0].innerText = "No text loaded";
+        dom.submitPreview.ufBtn.classList.add("disabled");
+        dom.submitPreview.mqBtn.children[0].innerText = "No text loaded";
+        dom.submitPreview.mqBtn.classList.add("disabled");
+        dom.submitPreview.uqBtn.children[0].innerText = "No text loaded";
+        dom.submitPreview.uqBtn.classList.add("disabled");
     }
 }
 
@@ -181,7 +250,7 @@ function renderLoadButtons() {
         domType.loadButton.map(btn => {
             btn.elem.classList.remove("disabled")
         });
-    }else{
+    } else {
         domType.loadButton.map(btn => {
             btn.elem.classList.add("disabled")
         });
@@ -283,7 +352,46 @@ function disableLoading() {
 }
 
 function loadContentWithId(id) {
-    handleContentPromise($.getJSON(`/api/data/content/${id}`));
+    handleContentPromise($.getJSON(`/api/tags/find/id/${id}`));
+}
+
+const load = {
+    byId(){
+        if (!g.allowLoading) return;
+        disableLoading();
+        console.log("load by ID")
+        loadContentWithId(dom.loadOptions.contentId.input.value);
+    },
+    byPantipTopic() {
+        if (!g.allowLoading) return;
+        disableLoading();
+        console.log("load by Pantip Topic");
+        loadContentWithId(`pantip/${dom.loadOptions.pantipId.input.value}/post`);
+    },
+    first() {
+        if (!g.allowLoading) return;
+        disableLoading();
+        console.log("load first");
+        handleContentPromise($.getJSON(`/api/tags/find/first`));
+    },
+    unlabeled() {
+        if (!g.allowLoading) return;
+        disableLoading();
+        console.log("load Unlabeled");
+        handleContentPromise($.getJSON(`/api/tags/find/unlabeled`));
+    },
+    prev() {
+        if (!g.allowLoading || g.contentId === undefined) return;
+        disableLoading();
+        console.log("load prev");
+        handleContentPromise($.getJSON(`/api/tags/find/prev-id/${g.contentId}`));
+    },
+    next() {
+        if (!g.allowLoading || g.contentId === undefined) return;
+        disableLoading();
+        console.log("load next");
+        handleContentPromise($.getJSON(`/api/tags/find/next-id/${g.contentId}`));
+    }
 }
 
 function handleContentPromise(promise) {
@@ -331,16 +439,20 @@ function handleContentPromise(promise) {
             if (g.tags.length > 0) {
                 console.log
                 if (g.tags[0].str === "text-none") {
-                    dom.dataInfo.contentTagStatusLabel.textContent = 'Labeled, NO tags (0 tags)';
+                    dom.dataInfo.contentTagStatus.textContent = 'Labeled, NO tags (0 tags)';
                 } else {
-                    dom.dataInfo.contentTagStatusLabel.textContent = g.tags.length === 1 ? `Labeled, 1 tag` : `Labeled, ${g.tags.length} tags`;
+                    dom.dataInfo.contentTagStatus.textContent = g.tags.length === 1 ? `Labeled, 1 tag` : `Labeled, ${g.tags.length} tags`;
                 }
             } else {
-                dom.dataInfo.contentTagStatusLabel.textContent = 'Unlabeled';
+                dom.dataInfo.contentTagStatus.textContent = 'Unlabeled';
             }
 
             g.data.string = g.content.text;
-            renderTextbox();
+            g.data.entries = g.content.tags;
+            if(g.data.entries === undefined){
+                g.data.entries = {};
+            }
+            renderSentmentPreview();
             renderSubmissionPreview();
             // checkShouldSubmitAsNothing();
 
@@ -378,49 +490,85 @@ function handleContentPromise(promise) {
 {
     console.log(dom);
 
-    dom.loadOptions.contentId.loadButton.elem.addEventListener("click", () => {
-        if (!g.allowLoading) return;
-        disableLoading();
-        loadContentWithId(dom.loadOptions.contentId.input.value);
-    });
-    dom.loadOptions.pantipId.loadButton.elem.addEventListener("click", () => {
-        if (!g.allowLoading) return;
-        disableLoading();
-        console.log("pantip");
-        handleContentPromise($.getJSON(`/api/data/content/pantip/${dom.loadOptions.pantipId.input.value}/post`));
-    });
+    dom.loadOptions.contentId.loadButton.elem.addEventListener("click", load.byId);
+    dom.loadOptions.pantipId.loadButton.elem.addEventListener("click", load.byPantipTopic);
+    dom.loadOptions.type.first.elem.addEventListener("click", load.first);
+    dom.loadOptions.type.unlabeled.elem.addEventListener("click", load.unlabeled);
+    dom.loadOptions.type.prev.elem.addEventListener("click", load.prev);
+    dom.loadOptions.type.next.elem.addEventListener("click", load.next);
     
-    dom.submitPreview.nBtn.addEventListener("click", ()=>{
-        if(g.data.string === null){
+    dom.submitPreview.nBtn.addEventListener("click", () => {
+        if (g.data.string === null) {
             return;
         }
-        if(g.newEntry !== null){
+        if (g.newEntry !== null) {
             g.newEntry = null;
             renderSubmissionPreview();
             return;
         }
-        if(g.data.posEntries.length !== 0 && g.data.negEntries.length !== 0){
-            return;
+        const entryTypes = Object.keys(g.data.entries);
+        if (entryTypes.length === 1 && entryTypes[0] === "none"){
+            const path = `/api/tags/mark-empty/id/${g.contentId}`;
+            handleContentPromise($.post(path));
+        }
+        if (entryTypes.length !== 0) { // There exist some entires
+            return
+        } else {
+            const path = `/api/tags/mark-empty/id/${g.contentId}`;
+            handleContentPromise($.post(path));
         }
     });
 
     function createSubmitListener(type, value) {
         return () => {
-            console.log("clicking", type, value);
-            const entries = type === "pos" ? g.data.posEntries : g.data.negEntries;
-            if (value === true) {
-                addEntry(entries, g.newEntry);
-                renderTextbox();
-            } else {
-                removeEntry(entries, g.newEntry);
-                renderTextbox();
-            }
+            console.log("submitting", type, value, g.newEntry);
+            const path = `/api/tags/mark/id/${g.contentId}`;
+            const payload = { value, type, newEntry: g.newEntry };
+            handleContentPromise($.post(path, payload));
         };
     }
-    dom.submitPreview.mpBtn.addEventListener("click", createSubmitListener("pos", true));
-    dom.submitPreview.upBtn.addEventListener("click", createSubmitListener("pos", false));
-    dom.submitPreview.mnBtn.addEventListener("click", createSubmitListener("neg", true));
-    dom.submitPreview.unBtn.addEventListener("click", createSubmitListener("neg", false));
+
+    const markPositive = createSubmitListener("pos", true);
+    const unmarkPositive = createSubmitListener("pos", false);
+    const markNegative = createSubmitListener("neg", true);
+    const unmarkNegative = createSubmitListener("neg", false);
+
+    dom.submitPreview.mpBtn.addEventListener("click", markPositive);
+    dom.submitPreview.upBtn.addEventListener("click", unmarkPositive);
+    dom.submitPreview.mnBtn.addEventListener("click", markNegative);
+    dom.submitPreview.unBtn.addEventListener("click", unmarkNegative);
+    dom.submitPreview.mpnBtn.addEventListener("click", () => {
+        const value = true;
+        let type = "pos";
+        console.log("submitting", type, value, g.newEntry);
+        const path = `/api/tags/mark/id/${g.contentId}`;
+        const payload = { value, type, newEntry: g.newEntry };
+        $.post(path, payload).then(()=>{
+            type = "neg";
+            console.log("submitting", type, value, g.newEntry);
+            const path = `/api/tags/mark/id/${g.contentId}`;
+            const payload = { value, type, newEntry: g.newEntry };
+            handleContentPromise($.post(path, payload));
+        });
+    });
+    dom.submitPreview.upnBtn.addEventListener("click", () => {
+        const value = false;
+        let type = "pos";
+        console.log("submitting", type, value, g.newEntry);
+        const path = `/api/tags/mark/id/${g.contentId}`;
+        const payload = { value, type, newEntry: g.newEntry };
+        $.post(path, payload).then(()=>{
+            type = "neg";
+            console.log("submitting", type, value, g.newEntry);
+            const path = `/api/tags/mark/id/${g.contentId}`;
+            const payload = { value, type, newEntry: g.newEntry };
+            handleContentPromise($.post(path, payload));
+        });
+    });
+    dom.submitPreview.mfBtn.addEventListener("click", createSubmitListener("feedback", true));
+    dom.submitPreview.ufBtn.addEventListener("click", createSubmitListener("feedback", false));
+    dom.submitPreview.mqBtn.addEventListener("click", createSubmitListener("question", true));
+    dom.submitPreview.uqBtn.addEventListener("click", createSubmitListener("question", false));
 
     dom.textbox.addEventListener("mouseup", (event) => {
         console.log(event);
@@ -432,8 +580,21 @@ function handleContentPromise(promise) {
             start: Math.min(range0, range1),
             end: Math.max(range0, range1),
         };
+        if(g.newEntry.start === g.newEntry.end || isNaN(g.newEntry.start) || isNaN(g.newEntry.end)){
+            g.newEntry = null;
+        }
+        console.log("newEntry", g.newEntry);
         renderSubmissionPreview();
     });
+
+    
+    window.addEventListener("keypress", (e) => {
+        console.log("Keypress event on key", e.key)
+        if (e.key === "u") { load.unlabeled(); }
+        if (e.key === "p" || e.key === "ArrowLeft") { load.prev(); }
+        if (e.key === "n" || e.key === "ArrowRight") { load.next(); }
+        // if (e.key === "Enter") { submitData(); }
+    })
 
     renderSubmissionPreview();
 
