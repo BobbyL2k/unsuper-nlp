@@ -154,7 +154,7 @@ function renderSentmentPreview() {
         }
         }
         elem.dataset.offset = lastIndex;
-        elem.innerText = g.data.string.slice(lastIndex, separator);
+        elem.innerHTML = g.data.string.slice(lastIndex, separator);
         lastIndex = separator;
         dom.textbox.appendChild(elem);
     }
@@ -164,8 +164,8 @@ function renderSubmissionPreview() {
     if (g.data.string !== null) {
         if (g.newEntry !== null) {
             const selectedText = g.data.string.slice(g.newEntry.start, g.newEntry.end)
-            dom.submitPreview.selectedText.value = `"${selectedText}"`;
-            dom.submitPreview.selectedSize.value = selectedText.length;
+            dom.submitPreview.selectedText.innerText = `"${selectedText}"`;
+            dom.submitPreview.selectedSize.innerText = selectedText.length;
             dom.submitPreview.nBtn.children[1].innerText = "Unselect";
             dom.submitPreview.nBtn.classList.remove("disabled");
             dom.submitPreview.mpBtn.classList.remove("disabled");
@@ -180,8 +180,8 @@ function renderSubmissionPreview() {
             dom.submitPreview.uqBtn.classList.remove("disabled");
 
         } else {
-            dom.submitPreview.selectedText.value = "No text selected";
-            dom.submitPreview.selectedSize.value = "No text selected";
+            dom.submitPreview.selectedText.innerText = "No text selected";
+            dom.submitPreview.selectedSize.innerText = "No text selected";
 
             const entryTypes = Object.keys(g.data.entries);
             if (entryTypes.length === 1 && entryTypes[0] === "none"){
@@ -217,8 +217,8 @@ function renderSubmissionPreview() {
             dom.submitPreview.uqBtn.classList.add("disabled");
         }
     } else {
-        dom.submitPreview.selectedText.value = "No text loaded";
-        dom.submitPreview.selectedSize.value = "No text loaded";
+        dom.submitPreview.selectedText.innerText = "No text loaded";
+        dom.submitPreview.selectedSize.innerText = "No text loaded";
 
         dom.submitPreview.nBtn.children[0].innerText = "No text loaded";
         dom.submitPreview.nBtn.classList.add("disabled");
