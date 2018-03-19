@@ -213,6 +213,13 @@ function handleContentPromise(promise) {
                 g.content.tag = {};
             }
 
+            function tagStrToObj(str) {
+                const [type, from, to] = str.split('-');
+                if (type !== "text") {
+                    throw Error("Invalid Tag", str);
+                }
+                return { from: parseInt(from), to: parseInt(to), str };
+            }
             g.tags = Object.keys(g.content.tag).map(tagStrToObj);
             g.tags.sort((a, b) => a.from - b.from);
             console.log("gtags", g.tags);
@@ -292,14 +299,6 @@ function checkShouldSubmitAsNothing(params) {
         dom.submitPreview.submitButton.innerText = "Remove all tags to mark as nothing";
         g.allowSubmit = false;
     }
-}
-
-function tagStrToObj(str) {
-    const [type, from, to] = str.split('-');
-    if (type !== "text") {
-        throw Error("Invalid Tag", str);
-    }
-    return { from: parseInt(from), to: parseInt(to), str };
 }
 
 function overlap(tagObjA, tagObjB) {

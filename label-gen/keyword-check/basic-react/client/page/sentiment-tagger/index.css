@@ -6,6 +6,11 @@
     width: 100%;
 }
 
+#side-bar{
+    height: calc(100vh - 1.5em);
+    overflow: scroll;
+}
+
 /* Buttons */
 #button-section > div {
     margin-bottom: 1em;
