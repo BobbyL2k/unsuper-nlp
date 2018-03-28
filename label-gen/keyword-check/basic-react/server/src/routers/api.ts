@@ -245,7 +245,7 @@ router.get("/data/untagged-content/*?", (req, res) => {
 
         const loadedContents = (await contents
             .find({ tag: { $not: { $gt: {} } } })
-            .sort({ id: -1 })
+            .sort({ score: -1 })
             .limit(Object.keys(userReserved.tag).length + 1)
             .toArray());
 
