@@ -1,6 +1,6 @@
 // import * as cheerio from "cheerio";
 import * as express from "express";
-import { connectDb, ContentSchema, ProjectSchema, DomainValue } from "../nlp-db";
+import { connectDb, ContentSchema, DomainValue, ProjectSchema } from "../nlp-db";
 import * as apiTags from "./api/tags";
 // import * as pantip from "../tools/pantip";
 
@@ -232,10 +232,10 @@ router.get("/data/content/*?", (req, res) => {
 
 const userReserved: {
     tag: { [userId: string]: string },
-    label: { [userId: string]: string }
+    label: { [userId: string]: string },
 } = {
-    tag: {}, label: {}
-};
+        tag: {}, label: {},
+    };
 router.get("/data/untagged-content/*?", (req, res) => {
     connectDb(async (contents, projects) => {
 
@@ -458,7 +458,7 @@ router.get("/data/unlabeled-content/*?", (req, res) => {
         const loadedContents = (await contents
             .find({
                 "tag": { $gt: {} },
-                "tag.text-none": { $exists: false }, 
+                "tag.text-none": { $exists: false },
                 "label.sentiment": { $exists: false },
             })
             .sort({ id: -1 })
@@ -528,7 +528,7 @@ router.post("/data/label-content/*?", (req, res) => {
         $set[`label.${DomainValue.sentiment.str}`] = { user: req.session.user, value };
         const option = { $set };
 
-        const dbResult = await contents.findOneAndUpdate({id}, option);
+        const dbResult = await contents.findOneAndUpdate({ id }, option);
 
         console.log("dbResult", dbResult);
 
@@ -616,18 +616,70 @@ router.get("/status/", (req, res) => {
                 ],
             }).count();
 
+        const sentimentLabeledContents = await contents.find(
+            {
+                "tag": { $exists: true },
+                "tag.text-none": { $exists: false },
+                "tags": { $gt: {} },
+            }, {
+                projection: {
+                    tags: 1,
+                },
+            },
+        ).toArray();
+        // console.log("sentimentLabeledContents", sentimentLabeledContents);
+        const tagsFilter = (tagType: string) => {
+            return (e: any) => e.tags !== undefined && e.tags[tagType] !== undefined;
+        };
+        const sentimentLabeled = sentimentLabeledContents.length;
+        const posCount = sentimentLabeledContents.filter(tagsFilter("pos")).length;
+        const negCount = sentimentLabeledContents.filter(tagsFilter("neg")).length;
+        const questionCount = sentimentLabeledContents.filter(tagsFilter("question")).length;
+        const feedbackCount = sentimentLabeledContents.filter(tagsFilter("feedback")).length;
+        const noneCount = sentimentLabeledContents.filter(tagsFilter("none")).length;
+
+        const roundNumber = (num: number) => {
+            return Math.round(num * 10000) / 100;
+        };
+
         const result = {
             overall: {
                 total,
                 labeled,
                 unlabeled: total - labeled,
-                percentage: Math.round(labeled / total * 10000) / 100,
+                percentage: roundNumber(labeled / total),
             },
             labeled: {
                 total: labeled,
                 containsNE,
                 empty: labeled - containsNE,
-                percentage: Math.round(containsNE / labeled * 10000) / 100,
+                percentage: roundNumber(containsNE / labeled),
+            },
+            sentiment: {
+                overall: {
+                    labeled: sentimentLabeled,
+                    percentage: roundNumber(sentimentLabeled / containsNE),
+                },
+                empty: {
+                    count: noneCount,
+                    percentage: roundNumber(noneCount / sentimentLabeled),
+                },
+                positive: {
+                    count: posCount,
+                    percentage: roundNumber(posCount / sentimentLabeled),
+                },
+                negative: {
+                    count: negCount,
+                    percentage: roundNumber(negCount / sentimentLabeled),
+                },
+                feedback: {
+                    count: feedbackCount,
+                    percentage: roundNumber(feedbackCount / sentimentLabeled),
+                },
+                question: {
+                    count: questionCount,
+                    percentage: roundNumber(questionCount / sentimentLabeled),
+                },
             },
         };
 
