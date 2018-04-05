@@ -95,6 +95,7 @@ const g = {
     document.getElementById("title").textContent = "-";
     document.getElementById("time").textContent = "-";
     document.getElementById("source").textContent = "-";
+    document.getElementById("confident-score").textContent = "-";
     dom.dataInfo.previewTextBox.textContent = "-";
     dom.dataInfo.taggingTextBox.value = "-";
     dom.submitPreview.selectedText.value = "None";
@@ -204,7 +205,12 @@ function handleContentPromise(promise) {
             if (g.content.info.source !== undefined) {
                 document.getElementById("source").textContent = g.content.info.source;
             } else {
-                document.getElementById("source").textContent = g.content.info.url
+                document.getElementById("source").textContent = g.content.info.url;
+            }
+            if (g.content.score !== undefined){
+                document.getElementById("confident-score").textContent = `${Math.round(g.content.score * 100000) / 100000 * 100}%`;
+            }else{
+                document.getElementById("confident-score").textContent = "Unscored";
             }
             dom.dataInfo.taggingTextBox.value = g.content.text;
             dom.dataInfo.taggingTextBox.style.height = dom.dataInfo.taggingTextBox.scrollHeight + 'px';
