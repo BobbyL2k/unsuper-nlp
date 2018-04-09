@@ -1,0 +1,13 @@
+{
+  "name": "standalone-web-crawler-v2",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "Private",
+  "private": true,
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.2",
+    "mz": "^2.7.0",
+    "request": "^2.83.0",
+    "request-promise-native": "^1.0.5"
+  }
+}
