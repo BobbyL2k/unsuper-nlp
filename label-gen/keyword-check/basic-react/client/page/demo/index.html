@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Social Listening Sentiment Tagger</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb"
+        crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+    <div id="app">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggler" aria-controls="navbarToggler"
+                aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarToggler">
+                <a class="navbar-brand" href="/app">Social Listening</a>
+                <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/page/content-tagger/">
+                            Content Tagger
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/page/content-creator/">
+                            Content Creater
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/api/status/" target="_blank">
+                            Current Status
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/page/content-labeler/">
+                            Content Labeler
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/page/sentiment-tagger/">
+                            Sentiment Tagger
+                        </a>
+                    </li>
+                    <li class="nav-item active">
+                        <div class="nav-link">
+                            <b>
+                                Demo
+                            </b>
+                            <span class="sr-only">(current)</span>
+                        </div>
+                    </li>
+                </ul>
+                <div class="my-2 my-lg-0">
+                    <a id="user-logout-btn" class="btn btn-outline-success my-2 my-sm-0" href="/logout">...</a>
+                </div>
+            </div>
+        </nav>
+        <div class="container">
+            <div class="row">
+                <div class="col-8">
+                    <h2>Input Text</h2>
+                    <textarea class="form-control" id="input" rows="3"></textarea>
+                    <div class="row">
+                        <div class="col-8">
+                        </div>
+                        <div class="col-4">
+                            <div id="submit-btn" class="btn btn-block btn-success">Submit</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <h3>Contains NE</h3>
+                    <div class="cne-per" id="contain-ne">N/A</div>
+                </div>
+            </div>
+            <div class="row preview">
+                <div class="col-md">
+                    <h3>Named Entity</h3>
+                    <div class="form-control" id="named-entity"></div>
+                    <h3>Questions</h3>
+                    <div class="form-control" id="question"></div>
+                    <h3>Positive Sentiment</h3>
+                    <div class="form-control" id="positive"></div>
+                    <h3>Negative Sentiment</h3>
+                    <div class="form-control" id="negative"></div>
+                    <h3>Feedback</h3>
+                    <div class="form-control" id="feedback"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb"
+        crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn"
+        crossorigin="anonymous"></script>
+    <script src="index.js"></script>
+</body>
+
+</html>

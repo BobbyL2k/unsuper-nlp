@@ -78,7 +78,17 @@ const g = {
     data: {
         string: null,
         entries: null,
-    }
+    },
+    userId: (function getUsername() {
+        function getCookie(name) {
+            var value = "; " + document.cookie;
+            var parts = value.split("; " + name + "=");
+            if (parts.length == 2) return parts.pop().split(";").shift();
+        }
+        const username = getCookie("user");
+        console.log(document.cookie, username);
+        return username;
+    })(),
 }
 
 function renderSentmentPreview() {
@@ -488,6 +498,9 @@ function handleContentPromise(promise) {
 }
 
 {
+    // Display username on logout button
+    document.getElementById("user-logout-btn").textContent = `Logout of "${g.userId}"`;
+    
     console.log(dom);
 
     dom.loadOptions.contentId.loadButton.elem.addEventListener("click", load.byId);

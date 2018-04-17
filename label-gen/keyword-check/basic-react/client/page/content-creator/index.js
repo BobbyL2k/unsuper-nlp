@@ -15,7 +15,12 @@ const g = {
     allowSubmit: false,
     content: null,
     userId: (function getUsername() {
-        const username = document.cookie.split(";")[0].split("=")[1];
+        function getCookie(name) {
+            var value = "; " + document.cookie;
+            var parts = value.split("; " + name + "=");
+            if (parts.length == 2) return parts.pop().split(";").shift();
+        }
+        const username = getCookie("user");
         console.log(document.cookie, username);
         return username;
     })(),

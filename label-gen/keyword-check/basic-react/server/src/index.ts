@@ -2,11 +2,13 @@ import * as bodyParser from "body-parser";
 import * as compression from "compression";
 import * as express from "express";
 import * as http from "http";
+import * as WebSocket from "ws";
 
 import auth from "./auth";
 import routerApi from "./routers/api";
 import routerApp from "./routers/app";
 import routerPage from "./routers/page";
+import * as apiPrediction from "./routers/api/prediction";
 
 const portNumber = 3000;
 
@@ -56,6 +58,10 @@ app.use("/page/", routerPage);
 app.use("/api/", routerApi);
 
 const server = http.createServer(app);
+
+const wss = new WebSocket.Server({ server });
+
+app.use("/api/predict", apiPrediction.createRouter(wss));
 
 server.on("listening", () => {
     console.log(`Listening on port ${portNumber}`);

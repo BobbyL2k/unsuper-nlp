@@ -1,0 +1,17 @@
+.cne-per {
+    text-align: center;
+    font-size: 300%;
+}
+
+.form-control {
+    min-height: 3em;
+}
+
+.preview span {
+    padding: 2px 0;
+}
+
+.preview span.active {
+    color: white;
+    border-bottom: solid 3px #222;
+}
