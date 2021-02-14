@@ -1,0 +1,14 @@
+{
+  "name": "standalone-web-crawler",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "Private",
+  "author": "BobbyL2k",
+  "dependencies": {
+    "async": "^2.5.0",
+    "cheerio": "^1.0.0-rc.2",
+    "concat-stream": "^1.6.0",
+    "request": "^2.83.0",
+    "shelljs": "^0.7.8"
+  }
+}
